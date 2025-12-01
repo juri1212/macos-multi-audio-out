@@ -146,8 +146,6 @@ public final class AudioAggregateManager: ObservableObject {
             let uid = getDeviceUID(id) ?? ""
             let isAgg = getIsAggregate(id)
             let isOut = deviceHasOutputChannels(id)
-            // Log discovered device for debugging
-            print("[AudioAggregateManager] Found device: id=\(id), uid=\(uid), name=\(name), isOutput=\(isOut), isAggregate=\(isAgg)")
             results.append(AudioDeviceInfo(id: id, uid: uid, name: name, isOutputCapable: isOut, isAggregate: isAgg))
         }
         return results
@@ -284,10 +282,8 @@ public final class AudioAggregateManager: ObservableObject {
         var newID: AudioObjectID = 0
         let status = AudioHardwareCreateAggregateDevice(aggDictSwift as CFDictionary, &newID)
         if status == noErr, newID != 0 {
-            print("[AudioAggregateManager] Created aggregate device id=\(newID) status=\(status) uid=\(uid) name=\(name)")
             return .success(newID)
         } else {
-            print("[AudioAggregateManager] Failed to create aggregate status=\(status) uid=\(uid) name=\(name)")
             return .failure(AggError.creationFailed(status))
         }
     }
