@@ -137,7 +137,6 @@ struct ContentView: View {
             Divider()
 
             HStack {
-                Button("Preferences") { showPreferences = true }
                 Spacer()
                 Button("Quit") { NSApp.terminate(nil) }
                     .keyboardShortcut("q", modifiers: .command)
@@ -157,12 +156,8 @@ struct ContentView: View {
                 loadVolumesForSelectedDevices()
             }
         }
-        .onChange(of: selectedPrimary) { _ in loadVolumesForSelectedDevices() }
-        .onChange(of: selectedSecondary) { _ in loadVolumesForSelectedDevices() }
-        .sheet(isPresented: $showPreferences) {
-            PreferencesView(toggleOn: $toggleOn)
-                .frame(minWidth: 320, minHeight: 140)
-        }
+        .onChange(of: selectedPrimary) { loadVolumesForSelectedDevices() }
+        .onChange(of: selectedSecondary) { loadVolumesForSelectedDevices() }
     }
 
     // Load volumes from AudioAggregateManager for the currently selected devices
@@ -186,24 +181,6 @@ struct ContentView: View {
         } else {
             secondaryVolume = 1.0
         }
-    }
-}
-
-struct PreferencesView: View {
-    @Binding var toggleOn: Bool
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Preferences")
-                .font(.title2)
-            Toggle("Enable option", isOn: $toggleOn)
-            Spacer()
-            HStack {
-                Spacer()
-                Button("Done") { NSApp.keyWindow?.close() }
-            }
-        }
-        .padding()
     }
 }
 
