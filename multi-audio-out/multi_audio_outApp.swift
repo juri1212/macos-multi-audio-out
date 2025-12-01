@@ -10,8 +10,11 @@ import SwiftUI
 @main
 struct multi_audio_outApp: App {
     var body: some Scene {
-        WindowGroup {
-            ContentView()
+            // Requires macOS 14+
+            MenuBarExtra("MyMenuApp", systemImage: "star.fill") {
+                ContentView()
+                    .frame(width: 260)
+            }
+            .menuBarExtraStyle(.window) // try .menu or .window to change appearance
         }
-    }
 }
