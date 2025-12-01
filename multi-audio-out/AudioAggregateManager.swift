@@ -39,6 +39,39 @@ public final class AudioAggregateManager: ObservableObject {
         outputDevices = fetchAllDevices().filter { $0.isOutputCapable }
     }
 
+    public func deviceHasVolumeControl(_ id: AudioObjectID) -> Bool {
+        var addr = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwareServiceDeviceProperty_VirtualMainVolume,
+            mScope: kAudioDevicePropertyScopeOutput,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        return AudioObjectHasProperty(id, &addr)
+    }
+
+    public func getDeviceVolume(_ id: AudioObjectID) -> Float? {
+        var addr = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwareServiceDeviceProperty_VirtualMainVolume,
+            mScope: kAudioDevicePropertyScopeOutput,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        var volume: Float32 = 0
+        var size = UInt32(MemoryLayout<Float32>.size)
+        let status = AudioObjectGetPropertyData(id, &addr, 0, nil, &size, &volume)
+        guard status == noErr else { return nil }
+        return Float(volume)
+    }
+
+    public func setDeviceVolume(_ id: AudioObjectID, value: Float) -> OSStatus {
+        var addr = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwareServiceDeviceProperty_VirtualMainVolume,
+            mScope: kAudioDevicePropertyScopeOutput,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        var v = Float32(max(0, min(1, value)))
+        let size = UInt32(MemoryLayout<Float32>.size)
+        return AudioObjectSetPropertyData(id, &addr, 0, nil, size, &v)
+    }
+
     public func enableAggregate(primary: AudioDeviceInfo, secondary: AudioDeviceInfo, name: String = "Multi-Output (App)") {
         guard primary.id != secondary.id else {
             statusMessage = "Choose two different devices."
