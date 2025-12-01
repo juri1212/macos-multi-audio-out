@@ -1,0 +1,95 @@
+# Xcode
+.DS_Store
+build/
+DerivedData/
+
+# User-specific files
+xcuserdata/
+*.xcuserstate
+*.pbxuser
+*.perspectivev3
+*.mode1v3
+*.mode2v3
+
+# Workspace settings (user-specific)
+xcshareddata/xcdebugger/
+xcshareddata/xcschemes/*-user.xcscheme
+
+# Xcode Derived Result bundles and result caches
+*.xcresult
+*.xccoverage
+
+# Provisioning and signing
+*.mobileprovision
+*.p12
+
+# Archives
+*.xcarchive
+
+# Swift Package Manager
+.build/
+Packages/
+.swiftpm/
+
+# If you use SwiftPM inside Xcode, keep Package.resolved (optional)
+# Package.resolved
+
+# CocoaPods
+Pods/
+
+# Carthage
+Carthage/Build/
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+
+# Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# Xcode Server
+integration/
+
+# Logs, coverage and profiling
+*.log
+*.trace
+*.profdata
+*.gcda
+xccov-report/
+
+# macOS
+*.DS_Store
+
+# IDEs
+.idea/
+.vscode/
+
+# Environment files / secrets
+.env
+.env.*
+Secrets.xcconfig
+
+# Misc
+*.moved-aside
+*.swp
+
+# Ignore build artifacts from common tools
+.build/
+
+# SwiftPM Package artifacts used by Xcode
+.swiftpm/
+
+# Keep the project file and workspace, but ignore user-specific workspace files
+!/*.xcodeproj
+!/*.xcworkspace
+
+# Ignore Xcode workspace user data inside the workspace (safe to ignore)
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+
+# Local SwiftPM and Xcode caches
+.package.resolved
+
+# End of .gitignore
