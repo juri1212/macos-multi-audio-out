@@ -20,123 +20,134 @@ struct ContentView: View {
     @State private var secondaryVolume: Double = 1.0
 
     var body: some View {
-        VStack(spacing: 12) {
-            Text("Multi-Output Audio")
-                .font(.headline)
-
-            // Device pickers
-            let deviceOptions = audioManager.outputDevices.filter { !$0.isAggregate }
-
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Choose two different output devices:")
-                    .font(.subheadline)
-                Picker("Primary device", selection: $selectedPrimary) {
-                    ForEach(deviceOptions) { dev in
-                        Text(dev.name).tag(Optional(dev))
-                    }
-                }
-                Picker("Secondary device", selection: $selectedSecondary) {
-                    ForEach(deviceOptions) { dev in
-                        Text(dev.name).tag(Optional(dev))
-                    }
-                }
-
-                // Volume controls for selected devices
-                Group {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("Primary Volume")
-                                .font(.caption)
-                            Text(selectedPrimary?.name ?? "No device selected")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Text("\(Int(primaryVolume * 100))%")
-                            .frame(width: 50, alignment: .trailing)
-                    }
-                    Slider(value: Binding(get: {
-                        primaryVolume
-                    }, set: { new in
-                        primaryVolume = new
-                        if let dev = selectedPrimary {
-                            _ = audioManager.setDeviceVolume(dev.id, value: Float(new))
-                        }
-                    }), in: 0...1)
-                    .disabled(selectedPrimary == nil || (selectedPrimary != nil && !audioManager.deviceHasVolumeControl(selectedPrimary!.id)))
-
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("Secondary Volume")
-                                .font(.caption)
-                            Text(selectedSecondary?.name ?? "No device selected")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Text("\(Int(secondaryVolume * 100))%")
-                            .frame(width: 50, alignment: .trailing)
-                    }
-                    Slider(value: Binding(get: {
-                        secondaryVolume
-                    }, set: { new in
-                        secondaryVolume = new
-                        if let dev = selectedSecondary {
-                            _ = audioManager.setDeviceVolume(dev.id, value: Float(new))
-                        }
-                    }), in: 0...1)
-                    .disabled(selectedSecondary == nil || (selectedSecondary != nil && !audioManager.deviceHasVolumeControl(selectedSecondary!.id)))
-                }
-            }
-
-            HStack(spacing: 8) {
-                Button(audioManager.aggregateEnabled ? "Disable Multi-Output" : "Enable Multi-Output") {
-                    if audioManager.aggregateEnabled {
-                        audioManager.disableAggregate()
-                    } else if let p = selectedPrimary, let s = selectedSecondary {
-                        audioManager.enableAggregate(primary: p, secondary: s)
-                        audioManager.refreshDevices()
-                    }
-                }
-                .keyboardShortcut(.defaultAction)
-                .disabled({
-                    if audioManager.aggregateEnabled { return false }
-                    guard let p = selectedPrimary, let s = selectedSecondary else { return true }
-                    return p == s
-                }())
-
-                Button("Refresh Devices") {
-                    audioManager.refreshDevices()
-                    // Attempt to auto-select first two devices if nothing chosen
-                    if selectedPrimary == nil || selectedSecondary == nil {
-                        let opts = audioManager.outputDevices.filter { !$0.isAggregate }
-                        if opts.count >= 2 {
-                            selectedPrimary = opts[0]
-                            selectedSecondary = opts[1]
-                            loadVolumesForSelectedDevices()
-                        } else if opts.count == 1 {
-                            selectedPrimary = opts[0]
-                            selectedSecondary = nil
-                            loadVolumesForSelectedDevices()
+        VStack(spacing: 8) {
+            VStack(spacing: 32) {
+                HStack{
+                    Text("Multi-Output Audio")
+                        .font(.headline)
+                    Spacer()
+                    Toggle(isOn: Binding(get: {
+                        audioManager.aggregateEnabled
+                    }, set: { newValue in
+                        if newValue {
+                            guard let p = selectedPrimary, let s = selectedSecondary, p != s else {
+                                print("Cannot enable aggregate: invalid device selection")
+                                return
+                            }
+                            audioManager.enableAggregate(primary: p, secondary: s)
+                            audioManager.refreshDevices()
                         } else {
-                            selectedPrimary = nil
-                            selectedSecondary = nil
-                            loadVolumesForSelectedDevices()
+                            audioManager.disableAggregate()
+                        }
+                    })){}
+                        .toggleStyle(SwitchToggleStyle())
+                        .help("Toggle multi-output aggregate device")
+                        .disabled({
+                            // Allow turning off when enabled; require valid selection to turn on
+                            if audioManager.aggregateEnabled { return false }
+                            guard let p = selectedPrimary, let s = selectedSecondary else { return true }
+                            return p == s
+                        }())
+                }
+                
+                
+                // Device pickers
+                let deviceOptions = audioManager.outputDevices.filter { !$0.isAggregate }
+                
+                VStack(alignment: .leading, spacing: 32) {
+                    // Primary picker + its volume immediately below
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Picker("", selection: $selectedPrimary) {
+                                ForEach(deviceOptions) { dev in
+                                    Text(dev.name).tag(Optional(dev))
+                                }
+                            }
+                            Button {
+                                audioManager.refreshDevices()
+                                // Attempt to auto-select first two devices if nothing chosen
+                                if selectedPrimary == nil || selectedSecondary == nil {
+                                    let opts = audioManager.outputDevices.filter { !$0.isAggregate }
+                                    if opts.count >= 2 {
+                                        selectedPrimary = opts[0]
+                                        selectedSecondary = opts[1]
+                                        loadVolumesForSelectedDevices()
+                                    } else if opts.count == 1 {
+                                        selectedPrimary = opts[0]
+                                        selectedSecondary = nil
+                                        loadVolumesForSelectedDevices()
+                                    } else {
+                                        selectedPrimary = nil
+                                        selectedSecondary = nil
+                                        loadVolumesForSelectedDevices()
+                                    }
+                                }
+                            } label: {
+                                Image(systemName: "arrow.clockwise")
+                                    .imageScale(.medium)
+                            }
+                            .help("Refresh device list")
+                        }
+                        
+                        VStack(spacing: 6) {
+                            HStack(spacing: 8) {
+                                Image(systemName: volumeIconName(volume: primaryVolume, hasControl: selectedPrimary != nil && audioManager.deviceHasVolumeControl(selectedPrimary!.id)))
+                                    .frame(width: 22, height: 22, alignment: .center)
+                                    .foregroundStyle(selectedPrimary == nil ? .secondary : .primary)
+                                    .accessibilityHidden(true)
+                                
+                                Slider(value: Binding(get: {
+                                    primaryVolume
+                                }, set: { new in
+                                    primaryVolume = new
+                                    if let dev = selectedPrimary {
+                                        _ = audioManager.setDeviceVolume(dev.id, value: Float(new))
+                                    }
+                                }), in: 0...1)
+                                .disabled(selectedPrimary == nil || (selectedPrimary != nil && !audioManager.deviceHasVolumeControl(selectedPrimary!.id)))
+                            }
+                        }
+                    }
+                    
+                    // Secondary picker + its volume immediately below
+                    VStack(alignment: .leading, spacing: 6) {
+                        Picker("", selection: $selectedSecondary) {
+                            ForEach(deviceOptions) { dev in
+                                Text(dev.name).tag(Optional(dev))
+                            }
+                        }
+                        
+                        // Secondary volume grouped directly under secondary picker
+                        VStack(spacing: 6) {
+                            HStack(spacing: 8) {
+                                Image(systemName: volumeIconName(volume: secondaryVolume, hasControl: selectedSecondary != nil && audioManager.deviceHasVolumeControl(selectedSecondary!.id)))
+                                    .frame(width: 22, height: 22, alignment: .center)
+                                    .foregroundStyle(selectedSecondary == nil ? .secondary : .primary)
+                                    .accessibilityHidden(true)
+                                Slider(value: Binding(get: {
+                                    secondaryVolume
+                                }, set: { new in
+                                    secondaryVolume = new
+                                    if let dev = selectedSecondary {
+                                        _ = audioManager.setDeviceVolume(dev.id, value: Float(new))
+                                    }
+                                }), in: 0...1)
+                                .disabled(selectedSecondary == nil || (selectedSecondary != nil && !audioManager.deviceHasVolumeControl(selectedSecondary!.id)))
+                            }
                         }
                     }
                 }
-            }
-
-            if !audioManager.statusMessage.isEmpty {
-                Text(audioManager.statusMessage)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(3)
             }
 
             Divider()
 
             HStack {
+                if !audioManager.statusMessage.isEmpty {
+                    Text(audioManager.statusMessage)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(3)
+                }
                 Spacer()
                 Button("Quit") { NSApp.terminate(nil) }
                     .keyboardShortcut("q", modifiers: .command)
@@ -180,6 +191,17 @@ struct ContentView: View {
             }
         } else {
             secondaryVolume = 1.0
+        }
+    }
+
+    // Helper: select an SF Symbol based on volume level and whether the device supports volume control
+    private func volumeIconName(volume: Double, hasControl: Bool) -> String {
+        guard hasControl else { return "speaker.slash.fill" }
+        if volume <= 0.0001 { return "speaker.slash.fill" }
+        switch volume {
+        case 0..<0.33: return "speaker.wave.1.fill"
+        case 0.33..<0.66: return "speaker.wave.2.fill"
+        default: return "speaker.wave.3.fill"
         }
     }
 }

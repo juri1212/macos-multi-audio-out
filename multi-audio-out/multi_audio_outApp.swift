@@ -11,7 +11,7 @@ import SwiftUI
 struct multi_audio_outApp: App {
     var body: some Scene {
             // Requires macOS 14+
-            MenuBarExtra("MyMenuApp", systemImage: "star.fill") {
+            MenuBarExtra("MyMenuApp", systemImage: "headphones") {
                 ContentView()
                     .frame(width: 260)
             }
