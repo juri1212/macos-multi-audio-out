@@ -1,0 +1,92 @@
+name: Build macOS App and Create Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    name: Build, package and release
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: 'latest'
+
+      - name: Install dependencies
+        run: |
+          echo "No external dependencies to install. Add commands if needed."
+
+      - name: Install xcpretty
+        run: |
+          gem install --no-document xcpretty
+
+      - name: Build app (Release)
+        env:
+          SCHEME: "multi-audio-out"
+          CONFIGURATION: "Release"
+        run: |
+          set -o pipefail
+          xcodebuild -scheme "$SCHEME" -configuration "$CONFIGURATION" -sdk macosx clean build CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" -derivedDataPath DerivedData | xcpretty || cat
+
+      - name: Find built .app
+        id: find_app
+        run: |
+          APP_PATH=$(find DerivedData -type d -name "*.app" | head -n 1)
+          if [ -z "$APP_PATH" ]; then
+            echo "No .app found"; exit 1
+          fi
+          echo "app_path=$APP_PATH" >> $GITHUB_OUTPUT
+
+      - name: Package .app as zip
+        id: package
+        run: |
+          VERSION=${GITHUB_REF_NAME:-latest}
+          APP_NAME=$(basename "${{ steps.find_app.outputs.app_path }}")
+          ZIP_NAME="${APP_NAME%.*}-${VERSION}.zip"
+          mkdir -p release
+          ditto -c -k --sequesterRsrc --keepParent "${{ steps.find_app.outputs.app_path }}" "release/$ZIP_NAME"
+          echo "zip=release/$ZIP_NAME" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub release
+        id: create_release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          body: |-
+            Release ${{ github.ref_name }}
+            - Built on macOS by GitHub Actions
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare asset info
+        id: asset_info
+        run: |
+          ASSET_PATH="${{ steps.package.outputs.zip }}"
+          if [ -z "$ASSET_PATH" ]; then echo "No asset path found"; exit 1; fi
+          ASSET_NAME=$(basename "$ASSET_PATH")
+          echo "asset_path=$ASSET_PATH" >> $GITHUB_OUTPUT
+          echo "asset_name=$ASSET_NAME" >> $GITHUB_OUTPUT
+
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.asset_info.outputs.asset_path }}
+          asset_name: ${{ steps.asset_info.outputs.asset_name }}
+          asset_content_type: application/zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+# Notes:
+# - The workflow triggers on tag pushes like `v1.2.3` and via manual dispatch.
+# - It builds the `multi-audio-out` scheme in Release configuration and disables code signing for CI.
+# - To fully automate a Homebrew tap update, a separate step is needed to update the tap repo and open a PR (requires a token with push rights to the tap stored as `HOMEBREW_PAT`).
