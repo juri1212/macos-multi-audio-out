@@ -10,6 +10,8 @@ jobs:
   build:
     name: Build, package and release
     runs-on: macos-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
