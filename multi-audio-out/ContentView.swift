@@ -172,6 +172,7 @@ struct ContentView: View {
         .padding(14)
         .background(Color.clear)
         .onAppear {
+            audioManager.refreshDevices()
             // Preselect first two non-aggregate outputs if available
             let opts = audioManager.outputDevices.filter { !$0.isAggregate }
             if opts.count >= 2 {
