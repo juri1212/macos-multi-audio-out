@@ -52,7 +52,7 @@ jobs:
         run: |
           VERSION=${GITHUB_REF_NAME:-latest}
           APP_NAME=$(basename "${{ steps.find_app.outputs.app_path }}")
-          ZIP_NAME="${APP_NAME%.*}-${VERSION}.zip"
+          ZIP_NAME="${APP_NAME%.*}.zip"
           mkdir -p release
           ditto -c -k --sequesterRsrc --keepParent "${{ steps.find_app.outputs.app_path }}" "release/$ZIP_NAME"
           echo "zip=release/$ZIP_NAME" >> $GITHUB_OUTPUT
