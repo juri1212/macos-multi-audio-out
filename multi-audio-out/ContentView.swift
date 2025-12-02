@@ -1,4 +1,3 @@
-//
 //  ContentView.swift
 //  multi-audio-out
 //
@@ -160,8 +159,12 @@ struct ContentView: View {
                         .imageScale(.medium)
                 }
                 .help("Refresh device list")
-                Button("Quit") { NSApp.terminate(nil) }
-                    .keyboardShortcut("q", modifiers: .command)
+                Button("Quit") {
+                    // Ensure we reset audio before quitting
+                    audioManager.disableAggregate()
+                    NSApp.terminate(nil)
+                }
+                .keyboardShortcut("q", modifiers: .command)
             }
             .controlCenterContainer()
 
@@ -183,6 +186,10 @@ struct ContentView: View {
         }
         .onChange(of: selectedPrimary) { loadVolumesForSelectedDevices() }
         .onChange(of: selectedSecondary) { loadVolumesForSelectedDevices() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
+            // Disable aggregate and restore defaults on app quit
+            audioManager.disableAggregate()
+        }
     }
 
     // Load volumes from AudioAggregateManager for the currently selected devices
