@@ -57,34 +57,13 @@ jobs:
           ditto -c -k --sequesterRsrc --keepParent "${{ steps.find_app.outputs.app_path }}" "release/$ZIP_NAME"
           echo "zip=release/$ZIP_NAME" >> $GITHUB_OUTPUT
 
-      - name: Create GitHub release
-        id: create_release
-        uses: ncipollo/release-action@v1
+      - name: Create GitHub release and upload asset
+        uses: softprops/action-gh-release@v1
         with:
-          tag: ${{ github.ref_name }}
-          name: ${{ github.ref_name }}
           body: |-
             Release ${{ github.ref_name }}
             - Built on macOS by GitHub Actions
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Prepare asset info
-        id: asset_info
-        run: |
-          ASSET_PATH="${{ steps.package.outputs.zip }}"
-          if [ -z "$ASSET_PATH" ]; then echo "No asset path found"; exit 1; fi
-          ASSET_NAME=$(basename "$ASSET_PATH")
-          echo "asset_path=$ASSET_PATH" >> $GITHUB_OUTPUT
-          echo "asset_name=$ASSET_NAME" >> $GITHUB_OUTPUT
-
-      - name: Upload release asset
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ steps.asset_info.outputs.asset_path }}
-          asset_name: ${{ steps.asset_info.outputs.asset_name }}
-          asset_content_type: application/zip
+          files: release/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
