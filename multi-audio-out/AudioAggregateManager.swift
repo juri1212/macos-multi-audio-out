@@ -19,7 +19,6 @@ public final class AudioAggregateManager: ObservableObject {
     // Track IDs for lifecycle
     private var createdAggregateID: AudioObjectID = 0
     private var previousDefaultOutput: AudioObjectID = 0
-
     public init() {
         refreshDevices()
         previousDefaultOutput = getDefaultOutputDevice()
@@ -37,6 +36,76 @@ public final class AudioAggregateManager: ObservableObject {
 
     public func refreshDevices() {
         outputDevices = fetchAllDevices().filter { $0.isOutputCapable }
+    }
+    
+    public func readLiveAggregateSubDevices() -> (primaryUID: AudioObjectID, secondaryUID: AudioObjectID)? {
+        let aggregateID = createdAggregateID
+        guard aggregateID != 0 else { return nil }
+        
+        print("Reading aggregate subdevices for aggregate ID \(aggregateID)")
+
+        // 1) Try master UID
+        var addrMaster = AudioObjectPropertyAddress(
+            mSelector: kAudioAggregateDevicePropertyMainSubDevice, // SDK symbol for master subdevice
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        var size: UInt32 = 0
+        if AudioObjectGetPropertyDataSize(aggregateID, &addrMaster, 0, nil, &size) != noErr || size == 0 {
+            // master property may be absent — that's OK (we'll derive master from the list)
+        }
+        var masterUID: String?
+        if size > 0 {
+            var cfMasterUnm: Unmanaged<CFString>? = nil
+            let status = withUnsafeMutablePointer(to: &cfMasterUnm) {
+                AudioObjectGetPropertyData(aggregateID, &addrMaster, 0, nil, &size, $0)
+            }
+            if status == noErr, let unm = cfMasterUnm {
+                let cf = unm.takeUnretainedValue()
+                masterUID = cf as String
+            }
+        }
+        
+        print("Read aggregate master UID: \(masterUID ?? "nil")")
+        
+        guard masterUID != nil else { return nil }
+        
+        let masterID = audioObjectID(forUID: masterUID!)
+        
+        print("Master subdevice AudioObjectID = \(masterID)")
+
+        // 2) Read subdevice list
+        var addrList = AudioObjectPropertyAddress(
+            mSelector: kAudioAggregateDevicePropertyActiveSubDeviceList,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        var listSize: UInt32 = 0
+        guard AudioObjectGetPropertyDataSize(aggregateID, &addrList, 0, nil, &listSize) == noErr, listSize > 0 else {
+            return nil
+        }
+        
+        let deviceCount = Int(listSize) / MemoryLayout<AudioObjectID>.size
+        guard deviceCount > 0 else { return nil }
+        var deviceIDs = Array(repeating: AudioObjectID(0), count: deviceCount)
+        // Use a safe buffer pointer when passing the array to C
+        deviceIDs.withUnsafeMutableBufferPointer { ptr in
+            if let base = ptr.baseAddress {
+                _ = AudioObjectGetPropertyData(aggregateID, &addrList, 0, nil, &listSize, base)
+            }
+        }
+
+        print("Read aggregate subdevice UIDs: \(deviceIDs)")
+        guard deviceIDs.count >= 2 else { return nil }
+
+        // determine master and secondary
+        let masterIndex: Int
+        if let m = masterID, let idx = deviceIDs.firstIndex(of: m) { masterIndex = idx }
+        else { masterIndex = 0 }
+
+        let secondaryIndex = (masterIndex == 0) ? 1 : 0
+        print("Read aggregate subdevices: master UID = \(deviceIDs[masterIndex]), secondary UID = \(deviceIDs[secondaryIndex])")
+        return (primaryUID: deviceIDs[masterIndex], secondaryUID: deviceIDs[secondaryIndex])
     }
 
     public func deviceHasVolumeControl(_ id: AudioObjectID) -> Bool {
@@ -87,6 +156,7 @@ public final class AudioAggregateManager: ObservableObject {
         switch createAggregateDevice(name: name, masterSubDeviceUID: masterUID, subDevices: subDevices) {
         case .success(let newID):
             createdAggregateID = newID
+            print("Created aggregate device with id=\(newID)")
             previousDefaultOutput = getDefaultOutputDevice()
             let setOut = setDefaultOutputDevice(newID)
             let setSys = setDefaultSystemOutputDevice(newID)
@@ -136,7 +206,6 @@ public final class AudioAggregateManager: ObservableObject {
                 _ = AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &addr, 0, nil, &dataSize, base)
             }
         }
-        guard status == noErr else { return [] }
 
         var results: [AudioDeviceInfo] = []
         results.reserveCapacity(deviceIDs.count)
@@ -287,6 +356,30 @@ public final class AudioAggregateManager: ObservableObject {
             return .failure(AggError.creationFailed(status))
         }
     }
+    
+    private func audioObjectID(forUID uid: String) -> AudioObjectID? {
+        var uidCF = uid as CFString
+        var addr = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwarePropertyDeviceForUID,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        
+        var deviceID = AudioObjectID(0)
+        var size = UInt32(MemoryLayout<AudioObjectID>.size)
+
+        let status = AudioObjectGetPropertyData(
+            AudioObjectID(kAudioObjectSystemObject),
+            &addr,
+            UInt32(MemoryLayout<CFString>.size),
+            &uidCF,
+            &size,
+            &deviceID
+        )
+
+        return status == noErr ? deviceID : nil
+    }
+
 
     @discardableResult
     private func destroyAggregateDevice(_ id: AudioObjectID) -> OSStatus {

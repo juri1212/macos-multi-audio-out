@@ -136,6 +136,7 @@ struct ContentView: View {
                 }
                 Spacer()
                 Button {
+                    print(audioManager.readLiveAggregateSubDevices())
                     audioManager.refreshDevices()
                     // Attempt to auto-select first two devices if nothing chosen
                     if selectedPrimary == nil || selectedSecondary == nil {
