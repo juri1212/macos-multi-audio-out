@@ -51,11 +51,9 @@ struct ContentView: View {
             }
             .controlCenterContainer()
 
-            // Device pickers - present primary and secondary as two separate containers
             let deviceOptions = audioManager.outputDevices.filter { !$0.isAggregate }
 
             VStack(spacing: 8) {
-                // Primary picker + its volume
                 VStack(alignment: .leading, spacing: 8) {
                     Picker("", selection: $selectedPrimary) {
                         ForEach(deviceOptions) { dev in
@@ -90,7 +88,6 @@ struct ContentView: View {
                 }
                 .controlCenterContainer()
 
-                // Secondary picker + its volume
                 VStack(alignment: .leading, spacing: 8) {
                     Picker("", selection: $selectedSecondary) {
                         ForEach(deviceOptions) { dev in
@@ -126,7 +123,6 @@ struct ContentView: View {
                 .controlCenterContainer()
             }
 
-            // Footer container with status and actions
             HStack {
                 if !audioManager.statusMessage.isEmpty {
                     Text(audioManager.statusMessage)
@@ -136,25 +132,7 @@ struct ContentView: View {
                 }
                 Spacer()
                 Button {
-                    print(audioManager.readLiveAggregateSubDevices())
-                    audioManager.refreshDevices()
-                    // Attempt to auto-select first two devices if nothing chosen
-                    if selectedPrimary == nil || selectedSecondary == nil {
-                        let opts = audioManager.outputDevices.filter { !$0.isAggregate }
-                        if opts.count >= 2 {
-                            selectedPrimary = opts[0]
-                            selectedSecondary = opts[1]
-                            loadVolumesForSelectedDevices()
-                        } else if opts.count == 1 {
-                            selectedPrimary = opts[0]
-                            selectedSecondary = nil
-                            loadVolumesForSelectedDevices()
-                        } else {
-                            selectedPrimary = nil
-                            selectedSecondary = nil
-                            loadVolumesForSelectedDevices()
-                        }
-                    }
+                    refreshAudioDevices()
                 } label: {
                     Image(systemName: "arrow.clockwise")
                         .imageScale(.medium)
@@ -173,18 +151,7 @@ struct ContentView: View {
         .padding(14)
         .background(Color.clear)
         .onAppear {
-            audioManager.refreshDevices()
-            // Preselect first two non-aggregate outputs if available
-            let opts = audioManager.outputDevices.filter { !$0.isAggregate }
-            if opts.count >= 2 {
-                selectedPrimary = opts[0]
-                selectedSecondary = opts[1]
-                loadVolumesForSelectedDevices()
-            } else if opts.count == 1 {
-                selectedPrimary = opts[0]
-                selectedSecondary = nil
-                loadVolumesForSelectedDevices()
-            }
+            refreshAudioDevices()
         }
         .onChange(of: selectedPrimary) { loadVolumesForSelectedDevices() }
         .onChange(of: selectedSecondary) { loadVolumesForSelectedDevices() }
@@ -193,8 +160,32 @@ struct ContentView: View {
             audioManager.disableAggregate()
         }
     }
+    
+    private func refreshAudioDevices() {
+        audioManager.refreshDevices()
+        
+        if let subs = audioManager.readLiveAggregateSubDevices() {
+            selectedPrimary = subs.primaryDevice
+            selectedSecondary = subs.secondaryDevice
+        }
 
-    // Load volumes from AudioAggregateManager for the currently selected devices
+        // Attempt to auto-select first two devices if nothing chosen
+        if selectedPrimary == nil || selectedSecondary == nil {
+            let opts = audioManager.outputDevices.filter { !$0.isAggregate }
+            if opts.count >= 2 {
+                selectedPrimary = opts[0]
+                selectedSecondary = opts[1]
+            } else if opts.count == 1 {
+                selectedPrimary = opts[0]
+                selectedSecondary = nil
+            } else {
+                selectedPrimary = nil
+                selectedSecondary = nil
+            }
+        }
+        loadVolumesForSelectedDevices()
+    }
+
     private func loadVolumesForSelectedDevices() {
         if let p = selectedPrimary {
             if let v = audioManager.getDeviceVolume(p.id) {
@@ -217,7 +208,6 @@ struct ContentView: View {
         }
     }
 
-    // Helper: select an SF Symbol based on volume level and whether the device supports volume control
     private func volumeIconName(volume: Double, hasControl: Bool) -> String {
         guard hasControl else { return "speaker.slash.fill" }
         if volume <= 0.0001 { return "speaker.slash.fill" }
@@ -229,7 +219,6 @@ struct ContentView: View {
     }
 }
 
-// Small view modifier to create a Control Center / liquid glass style container
 private extension View {
     func controlCenterContainer() -> some View {
         self

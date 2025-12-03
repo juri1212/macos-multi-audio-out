@@ -38,11 +38,9 @@ public final class AudioAggregateManager: ObservableObject {
         outputDevices = fetchAllDevices().filter { $0.isOutputCapable }
     }
     
-    public func readLiveAggregateSubDevices() -> (primaryUID: AudioObjectID, secondaryUID: AudioObjectID)? {
+    public func readLiveAggregateSubDevices() -> (primaryDevice: AudioDeviceInfo, secondaryDevice: AudioDeviceInfo)? {
         let aggregateID = createdAggregateID
         guard aggregateID != 0 else { return nil }
-        
-        print("Reading aggregate subdevices for aggregate ID \(aggregateID)")
 
         // 1) Try master UID
         var addrMaster = AudioObjectPropertyAddress(
@@ -52,7 +50,7 @@ public final class AudioAggregateManager: ObservableObject {
         )
         var size: UInt32 = 0
         if AudioObjectGetPropertyDataSize(aggregateID, &addrMaster, 0, nil, &size) != noErr || size == 0 {
-            // master property may be absent — that's OK (we'll derive master from the list)
+            return nil
         }
         var masterUID: String?
         if size > 0 {
@@ -66,13 +64,9 @@ public final class AudioAggregateManager: ObservableObject {
             }
         }
         
-        print("Read aggregate master UID: \(masterUID ?? "nil")")
-        
         guard masterUID != nil else { return nil }
         
         let masterID = audioObjectID(forUID: masterUID!)
-        
-        print("Master subdevice AudioObjectID = \(masterID)")
 
         // 2) Read subdevice list
         var addrList = AudioObjectPropertyAddress(
@@ -95,7 +89,6 @@ public final class AudioAggregateManager: ObservableObject {
             }
         }
 
-        print("Read aggregate subdevice UIDs: \(deviceIDs)")
         guard deviceIDs.count >= 2 else { return nil }
 
         // determine master and secondary
@@ -104,8 +97,7 @@ public final class AudioAggregateManager: ObservableObject {
         else { masterIndex = 0 }
 
         let secondaryIndex = (masterIndex == 0) ? 1 : 0
-        print("Read aggregate subdevices: master UID = \(deviceIDs[masterIndex]), secondary UID = \(deviceIDs[secondaryIndex])")
-        return (primaryUID: deviceIDs[masterIndex], secondaryUID: deviceIDs[secondaryIndex])
+        return (primaryDevice: getDeviceInfo(forID: deviceIDs[masterIndex]), secondaryDevice: getDeviceInfo(forID: deviceIDs[secondaryIndex]))
     }
 
     public func deviceHasVolumeControl(_ id: AudioObjectID) -> Bool {
@@ -156,10 +148,9 @@ public final class AudioAggregateManager: ObservableObject {
         switch createAggregateDevice(name: name, masterSubDeviceUID: masterUID, subDevices: subDevices) {
         case .success(let newID):
             createdAggregateID = newID
-            print("Created aggregate device with id=\(newID)")
             previousDefaultOutput = getDefaultOutputDevice()
-            let setOut = setDefaultOutputDevice(newID)
-            let setSys = setDefaultSystemOutputDevice(newID)
+            let setOut = setDefaultOutputDevice(createdAggregateID)
+            let setSys = setDefaultSystemOutputDevice(createdAggregateID)
             if setOut == noErr && setSys == noErr {
                 aggregateEnabled = true
                 statusMessage = "Enabled multi-output: \(name)"
@@ -211,13 +202,17 @@ public final class AudioAggregateManager: ObservableObject {
         results.reserveCapacity(deviceIDs.count)
 
         for id in deviceIDs {
-            let name = getDeviceName(id) ?? "Unknown Device"
-            let uid = getDeviceUID(id) ?? ""
-            let isAgg = getIsAggregate(id)
-            let isOut = deviceHasOutputChannels(id)
-            results.append(AudioDeviceInfo(id: id, uid: uid, name: name, isOutputCapable: isOut, isAggregate: isAgg))
+            results.append(getDeviceInfo(forID: id))
         }
         return results
+    }
+    
+    private func getDeviceInfo(forID id: AudioObjectID) -> AudioDeviceInfo {
+        let name = getDeviceName(id) ?? "Unknown Device"
+        let uid = getDeviceUID(id) ?? ""
+        let isAgg = getIsAggregate(id)
+        let isOut = deviceHasOutputChannels(id)
+        return AudioDeviceInfo(id: id, uid: uid, name: name, isOutputCapable: isOut, isAggregate: isAgg)
     }
 
     private func getDeviceName(_ id: AudioObjectID) -> String? {
