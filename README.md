@@ -24,7 +24,7 @@ curl -sSL https://github.com/juri1212/macos-multi-audio-out/releases/latest/down
 - Ideal for **listening with two pairs of AirPods** (or any two Bluetooth headsets). Create an aggregate output, set each AirPod pair as one of the outputs, and enjoy synced playback between both sets.
 
 <div align="center">
-	<img src="docs/images/app-ui.png" alt="App UI placeholder" style="max-width:300px; height:auto;" />
+	<img src="docs/images/app-ui.png" alt="App UI placeholder" width="300" />
 </div>
 
 ## Usage
