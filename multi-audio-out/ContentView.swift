@@ -1,8 +1,10 @@
+//
 //  ContentView.swift
 //  multi-audio-out
 //
 //  Created by Juri Beforth on 01.12.25.
 //
+
 import SwiftUI
 import ServiceManagement
 import Combine
@@ -36,7 +38,7 @@ struct ContentView: View {
                         }, set: { newValue in
                             if newValue {
                                 guard let p = selectedPrimary, let s = selectedSecondary, p != s else {
-                                    print("Cannot enable aggregate: invalid device selection")
+                                    audioManager.setStatusMessage("Cannot enable aggregate: invalid device selection")
                                     return
                                 }
                                 audioManager.enableAggregate(primary: p, secondary: s)

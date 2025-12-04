@@ -85,7 +85,3 @@ To remove the app and its preferences:
 rm -rf /Applications/multi-audio-out.app
 rm -rf ~/Library/Preferences/juri1212.multi-audio-out.plist
 ```
-
-## License
-
-See the project repository for license information.
