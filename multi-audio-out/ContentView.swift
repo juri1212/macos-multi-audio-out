@@ -144,6 +144,7 @@ struct ContentView: View {
                                 .imageScale(.medium)
                         }
                         .help("Open Settings")
+                        .buttonStyle(.plain)
                         Spacer()
                         Button {
                             refreshAudioDevices()
@@ -152,12 +153,14 @@ struct ContentView: View {
                                 .imageScale(.medium)
                         }
                         .help("Refresh device list")
+                        .buttonStyle(.plain)
                         Button("Quit") {
                             // Ensure we reset audio before quitting
                             audioManager.disableAggregate()
                             NSApp.terminate(nil)
                         }
                         .keyboardShortcut("q", modifiers: .command)
+                        .buttonStyle(.plain)
                     }
                     .controlCenterContainer()
 
@@ -277,6 +280,7 @@ struct SettingsView: View {
                         .imageScale(.medium)
                 }
                 .help("Close Settings")
+                .buttonStyle(.plain)
             }
             .controlCenterContainer()
 
