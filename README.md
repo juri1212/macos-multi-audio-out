@@ -1,4 +1,4 @@
-# macOS Multi Audio Out
+# <img src="multi-audio-out/Assets.xcassets/AppIcon.appiconset/multi-audio-out-logo-64.png" alt="multi-audio-out logo" width="48" style="vertical-align:middle" /> macOS Multi Audio Out
 
 Split your sound. Double the fun.
 
