@@ -5,9 +5,9 @@
 //  Created by Juri Beforth on 01.12.25.
 //
 
-import SwiftUI
-import ServiceManagement
 import Combine
+import ServiceManagement
+import SwiftUI
 
 struct ContentView: View {
     @State private var count = 0
@@ -33,32 +33,52 @@ struct ContentView: View {
                         Text("Multi Audio Output")
                             .font(.headline)
                         Spacer()
-                        Toggle(isOn: Binding(get: {
-                            audioManager.aggregateEnabled
-                        }, set: { newValue in
-                            if newValue {
-                                guard let p = selectedPrimary, let s = selectedSecondary, p != s else {
-                                    audioManager.setStatusMessage("Cannot enable aggregate: invalid device selection")
-                                    return
+                        Toggle(
+                            isOn: Binding(
+                                get: {
+                                    audioManager.aggregateEnabled
+                                },
+                                set: { newValue in
+                                    if newValue {
+                                        guard let p = selectedPrimary,
+                                            let s = selectedSecondary, p != s
+                                        else {
+                                            audioManager.setStatusMessage(
+                                                "Cannot enable aggregate: invalid device selection"
+                                            )
+                                            return
+                                        }
+                                        audioManager.enableAggregate(
+                                            primary: p,
+                                            secondary: s
+                                        )
+                                        audioManager.refreshDevices()
+                                    } else {
+                                        audioManager.disableAggregate()
+                                    }
                                 }
-                                audioManager.enableAggregate(primary: p, secondary: s)
-                                audioManager.refreshDevices()
-                            } else {
-                                audioManager.disableAggregate()
-                            }
-                        })){}
+                            )
+                        ) {}
                         .toggleStyle(SwitchToggleStyle())
                         .help("Toggle multi-output aggregate device")
-                        .disabled({
-                            // Allow turning off when enabled; require valid selection to turn on
-                            if audioManager.aggregateEnabled { return false }
-                            guard let p = selectedPrimary, let s = selectedSecondary else { return true }
-                            return p == s
-                        }())
+                        .disabled(
+                            {
+                                // Allow turning off when enabled; require valid selection to turn on
+                                if audioManager.aggregateEnabled {
+                                    return false
+                                }
+                                guard let p = selectedPrimary,
+                                    let s = selectedSecondary
+                                else { return true }
+                                return p == s
+                            }()
+                        )
                     }
                     .controlCenterContainer()
 
-                    let deviceOptions = audioManager.outputDevices.filter { !$0.isAggregate }
+                    let deviceOptions = audioManager.outputDevices.filter {
+                        !$0.isAggregate
+                    }
 
                     VStack(spacing: 8) {
                         VStack(alignment: .leading, spacing: 8) {
@@ -71,26 +91,63 @@ struct ContentView: View {
 
                             HStack(spacing: 8) {
                                 if selectedPrimary != nil {
-                                    Image(systemName: volumeIconName(volume: primaryVolume, hasControl: audioManager.deviceHasVolumeControl(selectedPrimary!.id)))
-                                        .frame(width: 22, height: 22, alignment: .center)
-                                        .foregroundStyle(selectedPrimary == nil ? .secondary : .primary)
-                                        .accessibilityHidden(true)
+                                    Image(
+                                        systemName: volumeIconName(
+                                            volume: primaryVolume,
+                                            hasControl:
+                                                audioManager
+                                                .deviceHasVolumeControl(
+                                                    selectedPrimary!.id
+                                                )
+                                        )
+                                    )
+                                    .frame(
+                                        width: 22,
+                                        height: 22,
+                                        alignment: .center
+                                    )
+                                    .foregroundStyle(
+                                        selectedPrimary == nil
+                                            ? .secondary : .primary
+                                    )
+                                    .accessibilityHidden(true)
                                 } else {
                                     Image(systemName: "speaker.slash.fill")
-                                        .frame(width: 22, height: 22, alignment: .center)
+                                        .frame(
+                                            width: 22,
+                                            height: 22,
+                                            alignment: .center
+                                        )
                                         .foregroundStyle(.secondary)
                                         .accessibilityHidden(true)
                                 }
 
-                                Slider(value: Binding(get: {
-                                    primaryVolume
-                                }, set: { new in
-                                    primaryVolume = new
-                                    if let dev = selectedPrimary {
-                                        _ = audioManager.setDeviceVolume(dev.id, value: Float(new))
-                                    }
-                                }), in: 0...1)
-                                .disabled(selectedPrimary == nil || (selectedPrimary != nil && !audioManager.deviceHasVolumeControl(selectedPrimary!.id)))
+                                Slider(
+                                    value: Binding(
+                                        get: {
+                                            primaryVolume
+                                        },
+                                        set: { new in
+                                            primaryVolume = new
+                                            if let dev = selectedPrimary {
+                                                _ =
+                                                    audioManager.setDeviceVolume(
+                                                        dev.id,
+                                                        value: Float(new)
+                                                    )
+                                            }
+                                        }
+                                    ),
+                                    in: 0...1
+                                )
+                                .disabled(
+                                    selectedPrimary == nil
+                                        || (selectedPrimary != nil
+                                            && !audioManager
+                                                .deviceHasVolumeControl(
+                                                    selectedPrimary!.id
+                                                ))
+                                )
                             }
                         }
                         .controlCenterContainer()
@@ -105,26 +162,63 @@ struct ContentView: View {
 
                             HStack(spacing: 8) {
                                 if selectedSecondary != nil {
-                                    Image(systemName: volumeIconName(volume: secondaryVolume, hasControl: audioManager.deviceHasVolumeControl(selectedSecondary!.id)))
-                                        .frame(width: 22, height: 22, alignment: .center)
-                                        .foregroundStyle(selectedSecondary == nil ? .secondary : .primary)
-                                        .accessibilityHidden(true)
+                                    Image(
+                                        systemName: volumeIconName(
+                                            volume: secondaryVolume,
+                                            hasControl:
+                                                audioManager
+                                                .deviceHasVolumeControl(
+                                                    selectedSecondary!.id
+                                                )
+                                        )
+                                    )
+                                    .frame(
+                                        width: 22,
+                                        height: 22,
+                                        alignment: .center
+                                    )
+                                    .foregroundStyle(
+                                        selectedSecondary == nil
+                                            ? .secondary : .primary
+                                    )
+                                    .accessibilityHidden(true)
                                 } else {
                                     Image(systemName: "speaker.slash.fill")
-                                        .frame(width: 22, height: 22, alignment: .center)
+                                        .frame(
+                                            width: 22,
+                                            height: 22,
+                                            alignment: .center
+                                        )
                                         .foregroundStyle(.secondary)
                                         .accessibilityHidden(true)
                                 }
 
-                                Slider(value: Binding(get: {
-                                    secondaryVolume
-                                }, set: { new in
-                                    secondaryVolume = new
-                                    if let dev = selectedSecondary {
-                                        _ = audioManager.setDeviceVolume(dev.id, value: Float(new))
-                                    }
-                                }), in: 0...1)
-                                .disabled(selectedSecondary == nil || (selectedSecondary != nil && !audioManager.deviceHasVolumeControl(selectedSecondary!.id)))
+                                Slider(
+                                    value: Binding(
+                                        get: {
+                                            secondaryVolume
+                                        },
+                                        set: { new in
+                                            secondaryVolume = new
+                                            if let dev = selectedSecondary {
+                                                _ =
+                                                    audioManager.setDeviceVolume(
+                                                        dev.id,
+                                                        value: Float(new)
+                                                    )
+                                            }
+                                        }
+                                    ),
+                                    in: 0...1
+                                )
+                                .disabled(
+                                    selectedSecondary == nil
+                                        || (selectedSecondary != nil
+                                            && !audioManager
+                                                .deviceHasVolumeControl(
+                                                    selectedSecondary!.id
+                                                ))
+                                )
                             }
                         }
                         .controlCenterContainer()
@@ -138,7 +232,9 @@ struct ContentView: View {
                                 .lineLimit(3)
                         }
                         Button {
-                            withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                            withAnimation(
+                                .spring(response: 0.5, dampingFraction: 0.8)
+                            ) {
                                 showingSettings = true
                             }
                         } label: {
@@ -172,25 +268,45 @@ struct ContentView: View {
                 .onAppear {
                     refreshAudioDevices()
                 }
-                .onChange(of: selectedPrimary) { loadVolumesForSelectedDevices() }
-                .onChange(of: selectedSecondary) { loadVolumesForSelectedDevices() }
-                .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
+                .onChange(of: selectedPrimary) {
+                    loadVolumesForSelectedDevices()
+                }
+                .onChange(of: selectedSecondary) {
+                    loadVolumesForSelectedDevices()
+                }
+                .onReceive(
+                    NotificationCenter.default.publisher(
+                        for: NSApplication.willTerminateNotification
+                    )
+                ) { _ in
                     // Disable aggregate and restore defaults on app quit
                     audioManager.disableAggregate()
                 }
-                .transition(.asymmetric(insertion: .identity, removal: .scale.combined(with: .opacity)))
-                .rotation3DEffect(.degrees(showingSettings ? 180 : 0), axis: (x: 0, y: 1, z: 0))
+                .transition(
+                    .asymmetric(
+                        insertion: .identity,
+                        removal: .scale.combined(with: .opacity)
+                    )
+                )
+                .rotation3DEffect(
+                    .degrees(showingSettings ? 180 : 0),
+                    axis: (x: 0, y: 1, z: 0)
+                )
             }
 
             // Settings content
             if showingSettings {
                 SettingsView(onClose: {
-                    withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                    withAnimation(.spring(response: 0.5, dampingFraction: 0.8))
+                    {
                         showingSettings = false
                     }
                 })
                 .transition(.opacity)
-                .rotation3DEffect(.degrees(showingSettings ? 0 : -180), axis: (x: 0, y: 1, z: 0))
+                .rotation3DEffect(
+                    .degrees(showingSettings ? 0 : -180),
+                    axis: (x: 0, y: 1, z: 0)
+                )
             }
         }
         .onAppear {
@@ -202,10 +318,10 @@ struct ContentView: View {
             showingSettings = false
         }
     }
-    
+
     private func refreshAudioDevices() {
         audioManager.refreshDevices()
-        
+
         if let subs = audioManager.readLiveAggregateSubDevices() {
             selectedPrimary = subs.primaryDevice
             selectedSecondary = subs.secondaryDevice
@@ -274,7 +390,8 @@ struct SettingsView: View {
                     .font(.headline)
                 Spacer()
                 Button {
-                    withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                    withAnimation(.spring(response: 0.5, dampingFraction: 0.8))
+                    {
                         onClose()
                     }
                 } label: {
@@ -311,11 +428,14 @@ struct SettingsView: View {
     }
 }
 
-private extension View {
-    func controlCenterContainer() -> some View {
+extension View {
+    fileprivate func controlCenterContainer() -> some View {
         self
             .padding(12)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .background(
+                .ultraThinMaterial,
+                in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+            )
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .stroke(Color.white.opacity(0.06))
@@ -330,11 +450,11 @@ class AppState: ObservableObject {
 }
 
 #if DEBUG
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
-            .frame(width: 260)
-            .environmentObject(AppState())
+    struct ContentView_Previews: PreviewProvider {
+        static var previews: some View {
+            ContentView()
+                .frame(width: 260)
+                .environmentObject(AppState())
+        }
     }
-}
 #endif

@@ -5,10 +5,10 @@
 //  Created by Juri Beforth on 01.12.25.
 //
 
-import Foundation
+import AudioToolbox
 import Combine
 import CoreAudio
-import AudioToolbox
+import Foundation
 
 public struct AudioDeviceInfo: Identifiable, Hashable {
     public let id: AudioObjectID
@@ -49,25 +49,41 @@ public final class AudioAggregateManager: ObservableObject {
         self.statusMessage = message
     }
 
-    public func readLiveAggregateSubDevices() -> (primaryDevice: AudioDeviceInfo, secondaryDevice: AudioDeviceInfo)? {
+    public func readLiveAggregateSubDevices() -> (
+        primaryDevice: AudioDeviceInfo, secondaryDevice: AudioDeviceInfo
+    )? {
         let aggregateID = createdAggregateID
         guard aggregateID != 0 else { return nil }
 
         // 1) Try master UID
         var addrMaster = AudioObjectPropertyAddress(
-            mSelector: kAudioAggregateDevicePropertyMainSubDevice, // SDK symbol for master subdevice
+            mSelector: kAudioAggregateDevicePropertyMainSubDevice,  // SDK symbol for master subdevice
             mScope: kAudioObjectPropertyScopeGlobal,
             mElement: kAudioObjectPropertyElementMain
         )
         var size: UInt32 = 0
-        if AudioObjectGetPropertyDataSize(aggregateID, &addrMaster, 0, nil, &size) != noErr || size == 0 {
+        if AudioObjectGetPropertyDataSize(
+            aggregateID,
+            &addrMaster,
+            0,
+            nil,
+            &size
+        ) != noErr || size == 0 {
             return nil
         }
         var masterUID: String?
         if size > 0 {
             var cfMaster: CFString? = nil
-            let status = withUnsafeMutablePointer(to: &cfMaster) { ptr -> OSStatus in
-                return AudioObjectGetPropertyData(aggregateID, &addrMaster, 0, nil, &size, ptr)
+            let status = withUnsafeMutablePointer(to: &cfMaster) {
+                ptr -> OSStatus in
+                return AudioObjectGetPropertyData(
+                    aggregateID,
+                    &addrMaster,
+                    0,
+                    nil,
+                    &size,
+                    ptr
+                )
             }
             if status == noErr, let cf = cfMaster {
                 masterUID = cf as String
@@ -75,9 +91,9 @@ public final class AudioAggregateManager: ObservableObject {
                 return nil
             }
         }
-        
+
         guard masterUID != nil else { return nil }
-        
+
         let masterID = audioObjectID(forUID: masterUID!)
 
         // 2) Read subdevice list
@@ -87,10 +103,18 @@ public final class AudioAggregateManager: ObservableObject {
             mElement: kAudioObjectPropertyElementMain
         )
         var listSize: UInt32 = 0
-        guard AudioObjectGetPropertyDataSize(aggregateID, &addrList, 0, nil, &listSize) == noErr, listSize > 0 else {
+        guard
+            AudioObjectGetPropertyDataSize(
+                aggregateID,
+                &addrList,
+                0,
+                nil,
+                &listSize
+            ) == noErr, listSize > 0
+        else {
             return nil
         }
-        
+
         let expectedCount = Int(listSize) / MemoryLayout<AudioObjectID>.size
         guard expectedCount > 0 else { return nil }
 
@@ -98,21 +122,36 @@ public final class AudioAggregateManager: ObservableObject {
         var status: OSStatus = noErr
         deviceIDs.withUnsafeMutableBufferPointer { ptr in
             if let base = ptr.baseAddress {
-                status = AudioObjectGetPropertyData(aggregateID, &addrList, 0, nil, &listSize, base)
+                status = AudioObjectGetPropertyData(
+                    aggregateID,
+                    &addrList,
+                    0,
+                    nil,
+                    &listSize,
+                    base
+                )
             }
         }
         guard status == noErr else { return nil }
 
         let returnedCount = Int(listSize) / MemoryLayout<AudioObjectID>.size
-        guard returnedCount >= 2, returnedCount <= deviceIDs.count else { return nil }
+        guard returnedCount >= 2, returnedCount <= deviceIDs.count else {
+            return nil
+        }
         deviceIDs.removeSubrange(returnedCount..<deviceIDs.count)
 
         let masterIndex: Int
-        if let m = masterID, let idx = deviceIDs.firstIndex(of: m) { masterIndex = idx }
-        else { masterIndex = 0 }
+        if let m = masterID, let idx = deviceIDs.firstIndex(of: m) {
+            masterIndex = idx
+        } else {
+            masterIndex = 0
+        }
 
         let secondaryIndex = (masterIndex == 0) ? 1 : 0
-        return (primaryDevice: getDeviceInfo(forID: deviceIDs[masterIndex]), secondaryDevice: getDeviceInfo(forID: deviceIDs[secondaryIndex]))
+        return (
+            primaryDevice: getDeviceInfo(forID: deviceIDs[masterIndex]),
+            secondaryDevice: getDeviceInfo(forID: deviceIDs[secondaryIndex])
+        )
     }
 
     public func deviceHasVolumeControl(_ id: AudioObjectID) -> Bool {
@@ -132,7 +171,14 @@ public final class AudioAggregateManager: ObservableObject {
         )
         var volume: Float32 = 0
         var size = UInt32(MemoryLayout<Float32>.size)
-        let status = AudioObjectGetPropertyData(id, &addr, 0, nil, &size, &volume)
+        let status = AudioObjectGetPropertyData(
+            id,
+            &addr,
+            0,
+            nil,
+            &size,
+            &volume
+        )
         guard status == noErr else { return nil }
         return Float(volume)
     }
@@ -148,19 +194,27 @@ public final class AudioAggregateManager: ObservableObject {
         return AudioObjectSetPropertyData(id, &addr, 0, nil, size, &v)
     }
 
-    public func enableAggregate(primary: AudioDeviceInfo, secondary: AudioDeviceInfo, name: String = "Multi-Output (App)") {
+    public func enableAggregate(
+        primary: AudioDeviceInfo,
+        secondary: AudioDeviceInfo,
+        name: String = "Multi-Output (App)"
+    ) {
         guard primary.id != secondary.id else {
             statusMessage = "Choose two different devices."
             return
         }
-        
+
         let masterUID = primary.uid
         let subDevices: [(uid: String, driftCompensate: Bool)] = [
-            (uid: primary.uid, driftCompensate: false), // Master: no drift compensation
-            (uid: secondary.uid, driftCompensate: true) // Secondary: enable drift compensation
+            (uid: primary.uid, driftCompensate: false),  // Master: no drift compensation
+            (uid: secondary.uid, driftCompensate: true),  // Secondary: enable drift compensation
         ]
 
-        switch createAggregateDevice(name: name, masterSubDeviceUID: masterUID, subDevices: subDevices) {
+        switch createAggregateDevice(
+            name: name,
+            masterSubDeviceUID: masterUID,
+            subDevices: subDevices
+        ) {
         case .success(let newID):
             createdAggregateID = newID
             previousDefaultOutput = getDefaultOutputDevice()
@@ -170,10 +224,12 @@ public final class AudioAggregateManager: ObservableObject {
                 aggregateEnabled = true
                 statusMessage = "Enabled multi-output: \(name)"
             } else {
-                statusMessage = "Created aggregate but failed to set as default (out: \(setOut), sys: \(setSys))."
+                statusMessage =
+                    "Created aggregate but failed to set as default (out: \(setOut), sys: \(setSys))."
             }
         case .failure(let err):
-            statusMessage = "Failed to create aggregate (\(err.localizedDescription))."
+            statusMessage =
+                "Failed to create aggregate (\(err.localizedDescription))."
         }
     }
 
@@ -183,9 +239,11 @@ public final class AudioAggregateManager: ObservableObject {
         let setSys = setDefaultSystemOutputDevice(previousDefaultOutput)
         let destroyErr = destroyAggregateDevice(createdAggregateID)
         if setOut == noErr && setSys == noErr && destroyErr == noErr {
-            statusMessage = "Disabled multi-output and restored previous default."
+            statusMessage =
+                "Disabled multi-output and restored previous default."
         } else {
-            statusMessage = "Disabled with warnings (out: \(setOut), sys: \(setSys), destroy: \(destroyErr))."
+            statusMessage =
+                "Disabled with warnings (out: \(setOut), sys: \(setSys), destroy: \(destroyErr))."
         }
         createdAggregateID = 0
         aggregateEnabled = false
@@ -200,7 +258,13 @@ public final class AudioAggregateManager: ObservableObject {
             mElement: kAudioObjectPropertyElementMain
         )
         var dataSize: UInt32 = 0
-        let statusSize = AudioObjectGetPropertyDataSize(AudioObjectID(kAudioObjectSystemObject), &addr, 0, nil, &dataSize)
+        let statusSize = AudioObjectGetPropertyDataSize(
+            AudioObjectID(kAudioObjectSystemObject),
+            &addr,
+            0,
+            nil,
+            &dataSize
+        )
         guard statusSize == noErr else { return [] }
 
         let deviceCount = Int(dataSize) / MemoryLayout<AudioObjectID>.size
@@ -209,7 +273,14 @@ public final class AudioAggregateManager: ObservableObject {
         var status: OSStatus = noErr
         deviceIDs.withUnsafeMutableBufferPointer { ptr in
             if let base = ptr.baseAddress {
-                status = AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &addr, 0, nil, &dataSize, base)
+                status = AudioObjectGetPropertyData(
+                    AudioObjectID(kAudioObjectSystemObject),
+                    &addr,
+                    0,
+                    nil,
+                    &dataSize,
+                    base
+                )
             }
         }
         guard status == noErr else { return [] }
@@ -222,13 +293,19 @@ public final class AudioAggregateManager: ObservableObject {
         }
         return results
     }
-    
+
     private func getDeviceInfo(forID id: AudioObjectID) -> AudioDeviceInfo {
         let name = getDeviceName(id) ?? "Unknown Device"
         let uid = getDeviceUID(id) ?? ""
         let isAgg = getIsAggregate(id)
         let isOut = deviceHasOutputChannels(id)
-        return AudioDeviceInfo(id: id, uid: uid, name: name, isOutputCapable: isOut, isAggregate: isAgg)
+        return AudioDeviceInfo(
+            id: id,
+            uid: uid,
+            name: name,
+            isOutputCapable: isOut,
+            isAggregate: isAgg
+        )
     }
 
     private func getDeviceName(_ id: AudioObjectID) -> String? {
@@ -238,7 +315,10 @@ public final class AudioAggregateManager: ObservableObject {
             mElement: kAudioObjectPropertyElementMain
         )
         var dataSize: UInt32 = 0
-        guard AudioObjectGetPropertyDataSize(id, &addr, 0, nil, &dataSize) == noErr else { return nil }
+        guard
+            AudioObjectGetPropertyDataSize(id, &addr, 0, nil, &dataSize)
+                == noErr
+        else { return nil }
 
         var cf: CFString? = nil
         let status = withUnsafeMutablePointer(to: &cf) { ptr -> OSStatus in
@@ -255,7 +335,10 @@ public final class AudioAggregateManager: ObservableObject {
             mElement: kAudioObjectPropertyElementMain
         )
         var dataSize: UInt32 = 0
-        guard AudioObjectGetPropertyDataSize(id, &addr, 0, nil, &dataSize) == noErr else { return nil }
+        guard
+            AudioObjectGetPropertyDataSize(id, &addr, 0, nil, &dataSize)
+                == noErr
+        else { return nil }
 
         var cf: CFString? = nil
         let status = withUnsafeMutablePointer(to: &cf) { ptr -> OSStatus in
@@ -273,7 +356,14 @@ public final class AudioAggregateManager: ObservableObject {
         )
         var classID = AudioClassID(0)
         var size = UInt32(MemoryLayout<AudioClassID>.size)
-        let status = AudioObjectGetPropertyData(id, &addr, 0, nil, &size, &classID)
+        let status = AudioObjectGetPropertyData(
+            id,
+            &addr,
+            0,
+            nil,
+            &size,
+            &classID
+        )
         if status != noErr { return false }
         return classID == kAudioAggregateDeviceClassID
     }
@@ -285,16 +375,29 @@ public final class AudioAggregateManager: ObservableObject {
             mElement: kAudioObjectPropertyElementMain
         )
         var size: UInt32 = 0
-        guard AudioObjectGetPropertyDataSize(id, &addr, 0, nil, &size) == noErr else { return false }
-        guard size >= UInt32(MemoryLayout<AudioBufferList>.size) else { return false }
+        guard AudioObjectGetPropertyDataSize(id, &addr, 0, nil, &size) == noErr
+        else { return false }
+        guard size >= UInt32(MemoryLayout<AudioBufferList>.size) else {
+            return false
+        }
 
         let byteCount = Int(size)
         var buffer = Data(count: byteCount)
-        let channels = buffer.withUnsafeMutableBytes { (rawBuf: UnsafeMutableRawBufferPointer) -> Int in
+        let channels = buffer.withUnsafeMutableBytes {
+            (rawBuf: UnsafeMutableRawBufferPointer) -> Int in
             guard let base = rawBuf.baseAddress else { return 0 }
-            let status = AudioObjectGetPropertyData(id, &addr, 0, nil, &size, base)
+            let status = AudioObjectGetPropertyData(
+                id,
+                &addr,
+                0,
+                nil,
+                &size,
+                base
+            )
             guard status == noErr else { return 0 }
-            let ablPtr = UnsafeMutableAudioBufferListPointer(base.assumingMemoryBound(to: AudioBufferList.self))
+            let ablPtr = UnsafeMutableAudioBufferListPointer(
+                base.assumingMemoryBound(to: AudioBufferList.self)
+            )
             var ch = 0
             for buf in ablPtr {
                 ch += Int(buf.mNumberChannels)
@@ -312,7 +415,14 @@ public final class AudioAggregateManager: ObservableObject {
         )
         var dev = AudioObjectID(0)
         var size = UInt32(MemoryLayout<AudioObjectID>.size)
-        _ = AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &addr, 0, nil, &size, &dev)
+        _ = AudioObjectGetPropertyData(
+            AudioObjectID(kAudioObjectSystemObject),
+            &addr,
+            0,
+            nil,
+            &size,
+            &dev
+        )
         return dev
     }
 
@@ -325,7 +435,14 @@ public final class AudioAggregateManager: ObservableObject {
         )
         var dev = id
         let size = UInt32(MemoryLayout<AudioObjectID>.size)
-        return AudioObjectSetPropertyData(AudioObjectID(kAudioObjectSystemObject), &addr, 0, nil, size, &dev)
+        return AudioObjectSetPropertyData(
+            AudioObjectID(kAudioObjectSystemObject),
+            &addr,
+            0,
+            nil,
+            size,
+            &dev
+        )
     }
 
     @discardableResult
@@ -337,17 +454,29 @@ public final class AudioAggregateManager: ObservableObject {
         )
         var dev = id
         let size = UInt32(MemoryLayout<AudioObjectID>.size)
-        return AudioObjectSetPropertyData(AudioObjectID(kAudioObjectSystemObject), &addr, 0, nil, size, &dev)
+        return AudioObjectSetPropertyData(
+            AudioObjectID(kAudioObjectSystemObject),
+            &addr,
+            0,
+            nil,
+            size,
+            &dev
+        )
     }
 
     private enum AggError: Error { case creationFailed(OSStatus) }
 
-    private func createAggregateDevice(name: String, masterSubDeviceUID: String, subDevices: [(uid: String, driftCompensate: Bool)]) -> Result<AudioObjectID, Error> {
+    private func createAggregateDevice(
+        name: String,
+        masterSubDeviceUID: String,
+        subDevices: [(uid: String, driftCompensate: Bool)]
+    ) -> Result<AudioObjectID, Error> {
         // Build sub-device dictionaries
         let subDicts: [[String: Any]] = subDevices.map { entry in
             [
                 kAudioSubDeviceUIDKey as String: entry.uid,
-                kAudioSubDeviceDriftCompensationKey as String: entry.driftCompensate
+                kAudioSubDeviceDriftCompensationKey as String: entry
+                    .driftCompensate,
             ]
         }
 
@@ -356,20 +485,24 @@ public final class AudioAggregateManager: ObservableObject {
             kAudioAggregateDeviceNameKey as String: name,
             kAudioAggregateDeviceUIDKey as String: uid,
             kAudioAggregateDeviceIsPrivateKey as String: false,
-            kAudioAggregateDeviceMasterSubDeviceKey as String: masterSubDeviceUID,
+            kAudioAggregateDeviceMasterSubDeviceKey as String:
+                masterSubDeviceUID,
             kAudioAggregateDeviceSubDeviceListKey as String: subDicts,
-            kAudioAggregateDeviceIsStackedKey as String: true
+            kAudioAggregateDeviceIsStackedKey as String: true,
         ]
 
         var newID: AudioObjectID = 0
-        let status = AudioHardwareCreateAggregateDevice(aggDictSwift as CFDictionary, &newID)
+        let status = AudioHardwareCreateAggregateDevice(
+            aggDictSwift as CFDictionary,
+            &newID
+        )
         if status == noErr, newID != 0 {
             return .success(newID)
         } else {
             return .failure(AggError.creationFailed(status))
         }
     }
-    
+
     private func audioObjectID(forUID uid: String) -> AudioObjectID? {
         var uidCF = uid as CFString
         var addr = AudioObjectPropertyAddress(
@@ -377,7 +510,7 @@ public final class AudioAggregateManager: ObservableObject {
             mScope: kAudioObjectPropertyScopeGlobal,
             mElement: kAudioObjectPropertyElementMain
         )
-        
+
         var deviceID = AudioObjectID(0)
         var size = UInt32(MemoryLayout<AudioObjectID>.size)
 
@@ -395,7 +528,6 @@ public final class AudioAggregateManager: ObservableObject {
 
         return status == noErr ? deviceID : nil
     }
-
 
     @discardableResult
     private func destroyAggregateDevice(_ id: AudioObjectID) -> OSStatus {

@@ -5,8 +5,8 @@
 //  Created by Juri Beforth on 01.12.25.
 //
 
-import SwiftUI
 import AppKit
+import SwiftUI
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -21,12 +21,12 @@ struct multi_audio_outApp: App {
     // Provide a single shared AppState instance for the app
     private let appState = AppState()
     var body: some Scene {
-            // Requires macOS 14+
-            MenuBarExtra("MyMenuApp", systemImage: "headphones") {
-                ContentView()
-                    .frame(width: 260)
-                    .environmentObject(appState) // inject AppState into the environment
-            }
-            .menuBarExtraStyle(.window) // try .menu or .window to change appearance
+        // Requires macOS 14+
+        MenuBarExtra("MyMenuApp", systemImage: "headphones") {
+            ContentView()
+                .frame(width: 260)
+                .environmentObject(appState)  // inject AppState into the environment
         }
+        .menuBarExtraStyle(.window)  // try .menu or .window to change appearance
+    }
 }
