@@ -85,9 +85,16 @@ jobs:
         with:
           path: release-artifacts
 
+      - name: Flatten artifact directories
+        run: |
+          # Move any zip files from subdirectories into the release-artifacts root
+          shopt -s globstar || true
+          find release-artifacts -type f -name '*.zip' -exec mv -t release-artifacts {} + || true
+
       - name: List downloaded artifacts
         run: |
           ls -lh release-artifacts || true
+          tree release-artifacts || true
 
       - name: Create GitHub release and upload assets
         uses: softprops/action-gh-release@v1
