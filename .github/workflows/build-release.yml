@@ -8,8 +8,12 @@ on:
 
 jobs:
   build:
-    name: Build, package and release
-    runs-on: macos-latest
+    name: Build for macOS architectures
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        # macos-latest (ARM/Apple Silicon), macos-15-intel (Intel)
+        runner: [macos-latest, macos-15-intel]
     permissions:
       contents: write
 
@@ -52,18 +56,46 @@ jobs:
         run: |
           VERSION=${GITHUB_REF_NAME:-latest}
           APP_NAME=$(basename "${{ steps.find_app.outputs.app_path }}")
-          ZIP_NAME="${APP_NAME%.*}.zip"
+          ARCH=$(uname -m)
+          case "$ARCH" in
+            arm64|aarch64) ARCH_TAG=arm64 ;;
+            x86_64|amd64) ARCH_TAG=x86_64 ;;
+            *) ARCH_TAG=universal ;;
+          esac
+          ZIP_NAME="${APP_NAME%.*}-$ARCH_TAG.zip"
           mkdir -p release
           ditto -c -k --sequesterRsrc --keepParent "${{ steps.find_app.outputs.app_path }}" "release/$ZIP_NAME"
           echo "zip=release/$ZIP_NAME" >> $GITHUB_OUTPUT
 
-      - name: Create GitHub release and upload asset
+      - name: Upload build zip artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.ref_name || 'build' }}-${{ matrix.runner }}
+          path: release/*.zip
+
+  release:
+    name: Create GitHub release with artifacts
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+
+      - name: List downloaded artifacts
+        run: |
+          ls -lh release-artifacts || true
+
+      - name: Create GitHub release and upload assets
         uses: softprops/action-gh-release@v1
         with:
           body: |-
             Release ${{ github.ref_name }}
-            - Built on macOS by GitHub Actions
-          files: release/*.zip
+            - Built on macOS by GitHub Actions (Intel and ARM builds)
+          files: release-artifacts/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

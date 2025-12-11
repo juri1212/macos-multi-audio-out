@@ -9,7 +9,11 @@ Easily send macOS audio to two outputs at once — perfect for parties, demos, o
 One-liner for lazy folks:
 
 ```bash
-curl -sSL https://github.com/juri1212/macos-multi-audio-out/releases/latest/download/multi-audio-out.zip -o multi-audio-out.zip && unzip -q multi-audio-out.zip && rm -rf multi-audio-out.zip && mv "multi-audio-out.app" /Applications/ && open /Applications/multi-audio-out.app
+curl -sSLO "https://github.com/juri1212/macos-multi-audio-out/releases/latest/download/$(uname -m | sed -e 's/x86_64/x86_64/' -e 's/arm64/arm64/')-multi-audio-out.zip"
+unzip -q multi-audio-out.zip
+rm -rf multi-audio-out.zip
+mv "multi-audio-out.app" /Applications/
+open /Applications/multi-audio-out.app
 ```
 > Note: You may be prompted to allow the app in System Settings → Privacy & Security.
 
@@ -51,7 +55,14 @@ When enabled the app will attempt to set the new aggregate as both the default o
 - Download the latest release and unzip it with a single command:
 
 ```bash
-curl -sSL https://github.com/juri1212/macos-multi-audio-out/releases/latest/download/multi-audio-out.zip -o multi-audio-out.zip
+# Recommended: download the build matching your Mac's architecture (arm64 or x86_64)
+ARCH=$(uname -m)
+if [ "$ARCH" = "arm64" ]; then
+	FILE="arm64-multi-audio-out.zip"
+else
+	FILE="x86_64-multi-audio-out.zip"
+fi
+curl -sSL "https://github.com/juri1212/macos-multi-audio-out/releases/latest/download/$FILE" -o multi-audio-out.zip
 unzip multi-audio-out.zip
 rm -rf multi-audio-out.zip
 ```
@@ -66,7 +77,7 @@ open /Applications/multi-audio-out.app
 - Quick one-liner for lazy folks:
 
 ```bash
-curl -sSL https://github.com/juri1212/macos-multi-audio-out/releases/latest/download/multi-audio-out.zip -o multi-audio-out.zip && unzip -q multi-audio-out.zip && mv "multi-audio-out.app" /Applications/ && open /Applications/multi-audio-out.app
+ARCH=$(uname -m); if [ "$ARCH" = "arm64" ]; then FILE="arm64-multi-audio-out.zip"; else FILE="x86_64-multi-audio-out.zip"; fi; curl -sSL "https://github.com/juri1212/macos-multi-audio-out/releases/latest/download/$FILE" -o multi-audio-out.zip || curl -sSL https://github.com/juri1212/macos-multi-audio-out/releases/latest/download/multi-audio-out.zip -o multi-audio-out.zip && unzip -q multi-audio-out.zip && mv "multi-audio-out.app" /Applications/ && open /Applications/multi-audio-out.app
 ```
 
 > Note: You may be prompted to allow the app in System Settings → Privacy & Security. Approve any prompts and, if necessary, grant the app permissions to access audio devices.
