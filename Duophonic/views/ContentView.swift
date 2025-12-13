@@ -12,38 +12,37 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
-            // Main content
-            if !showingSettings {
-                MainView(openSettings: {
+            MainView(openSettings: {
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.9)) {
                     showingSettings = true
-                })
-                    .transition(
-                        .asymmetric(
-                            insertion: .identity,
-                            removal: .scale.combined(with: .opacity)
-                        )
-                    )
-                    .rotation3DEffect(
-                        .degrees(showingSettings ? 180 : 0),
-                        axis: (x: 0, y: 1, z: 0)
-                    )
-            }
+                }
+            })
+            .rotation3DEffect(
+                .degrees(showingSettings ? 180 : 0),
+                axis: (x: 0, y: 1, z: 0),
+                anchor: .center,
+                perspective: 0.8
+            )
+            .opacity(showingSettings ? 0 : 1)
+            .zIndex(showingSettings ? 0 : 1)
+            .allowsHitTesting(!showingSettings)
 
-            // Settings content
-            if showingSettings {
-                SettingsView(onClose: {
-                    withAnimation(.spring(response: 0.5, dampingFraction: 0.8))
-                    {
-                        showingSettings = false
-                    }
-                })
-                .transition(.opacity)
-                .rotation3DEffect(
-                    .degrees(showingSettings ? 0 : -180),
-                    axis: (x: 0, y: 1, z: 0)
-                )
-            }
+            SettingsView(onClose: {
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.9)) {
+                    showingSettings = false
+                }
+            })
+            .rotation3DEffect(
+                .degrees(showingSettings ? 0 : -180),
+                axis: (x: 0, y: 1, z: 0),
+                anchor: .center,
+                perspective: 0.8
+            )
+            .opacity(showingSettings ? 1 : 0)
+            .zIndex(showingSettings ? 1 : 0)
+            .allowsHitTesting(showingSettings)
         }
+        .compositingGroup()
         .onAppear {
             // Reset settings panel state when the menu reappears
             showingSettings = false

@@ -21,10 +21,7 @@ struct SettingsView: View {
                     .font(.headline)
                 Spacer()
                 Button {
-                    withAnimation(.spring(response: 0.5, dampingFraction: 0.8))
-                    {
-                        onClose()
-                    }
+                    onClose()
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .imageScale(.medium)
