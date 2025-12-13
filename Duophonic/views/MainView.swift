@@ -76,9 +76,6 @@ struct MainView: View {
                             ForEach(deviceOptions) { dev in
                                 Text(dev.name).tag(Optional(dev))
                             }
-                            Section("Device not found?") {
-                                Text("Refresh the device list using the button below.")
-                            }
                         }
                         .labelsHidden()
 
