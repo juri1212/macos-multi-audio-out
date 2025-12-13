@@ -32,7 +32,15 @@ jobs:
           CONFIGURATION: "Release"
         run: |
           set -o pipefail
-          xcodebuild -scheme "$SCHEME" -configuration "$CONFIGURATION" -sdk macosx clean build ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" -derivedDataPath DerivedData | xcpretty || cat && exit 1
+          LOG="DerivedData/xcodebuild.log"
+          xcodebuild -scheme "$SCHEME" -configuration "$CONFIGURATION" -sdk macosx clean build ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" -derivedDataPath DerivedData 2>&1 | tee "$LOG" | xcpretty
+
+          rc=$?
+          if [ $rc -ne 0 ]; then
+            echo "xcodebuild failed with exit code $rc — dumping raw log:"
+            cat "$LOG" || true
+            exit $rc
+          fi
 
       - name: Find built .app
         id: find_app
