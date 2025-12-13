@@ -44,8 +44,6 @@ public final class AudioAggregateManager: ObservableObject {
     }
 
     deinit {
-        // Best effort cleanup if still enabled
-        print("AudioAggregateManager deinit: cleaning up...")
         self.disableAggregate()
     }
 

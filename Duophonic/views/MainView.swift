@@ -71,12 +71,27 @@ struct MainView: View {
 
             VStack(spacing: 8) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Picker("", selection: $selectedPrimary) {
-                        ForEach(deviceOptions) { dev in
-                            Text(dev.name).tag(Optional(dev))
+                    HStack(alignment: .center, spacing: 8) {
+                        Picker("", selection: $selectedPrimary) {
+                            ForEach(deviceOptions) { dev in
+                                Text(dev.name).tag(Optional(dev))
+                            }
+                            Section("Device not found?") {
+                                Text("Refresh the device list using the button below.")
+                            }
                         }
+                        .labelsHidden()
+
+                        // Refresh button that preserves current selection so an open picker won't be forced closed
+                        Button {
+                            refreshAudioDevices(preserveSelection: true)
+                        } label: {
+                            Image(systemName: "arrow.clockwise")
+                                .imageScale(.small)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Refresh devices")
                     }
-                    .labelsHidden()
 
                     HStack(spacing: 8) {
                         if selectedPrimary != nil {
@@ -142,12 +157,23 @@ struct MainView: View {
                 .controlCenterContainer()
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Picker("", selection: $selectedSecondary) {
-                        ForEach(deviceOptions) { dev in
-                            Text(dev.name).tag(Optional(dev))
+                    HStack(alignment: .center, spacing: 8) {
+                        Picker("", selection: $selectedSecondary) {
+                            ForEach(deviceOptions) { dev in
+                                Text(dev.name).tag(Optional(dev))
+                            }
                         }
+                        .labelsHidden()
+
+                        Button {
+                            refreshAudioDevices(preserveSelection: true)
+                        } label: {
+                            Image(systemName: "arrow.clockwise")
+                                .imageScale(.small)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Refresh devices")
                     }
-                    .labelsHidden()
 
                     HStack(spacing: 8) {
                         if selectedSecondary != nil {
@@ -212,26 +238,6 @@ struct MainView: View {
                 }
                 .controlCenterContainer()
             }
-
-            HStack {
-                if !audioManager.statusMessage.isEmpty {
-                    Text(audioManager.statusMessage)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(3)
-                }
-                Spacer()
-                Button {
-                    refreshAudioDevices()
-                } label: {
-                    Image(systemName: "arrow.clockwise")
-                        .imageScale(.medium)
-                }
-                .help("Refresh device list")
-                .buttonStyle(.plain)
-            }
-            .controlCenterContainer()
-
         }
         .background(Color.clear)
         .onAppear {
@@ -245,28 +251,45 @@ struct MainView: View {
         }
     }
 
-    private func refreshAudioDevices() {
+    // Refresh devices. When preserveSelection is true, keep the current selection if the device IDs still exist
+    private func refreshAudioDevices(preserveSelection: Bool = false) {
+        let prevPrimaryID = selectedPrimary?.id
+        let prevSecondaryID = selectedSecondary?.id
+
         audioManager.refreshDevices()
 
-        if let subs = audioManager.readLiveAggregateSubDevices() {
-            selectedPrimary = subs.primaryDevice
-            selectedSecondary = subs.secondaryDevice
+        if !preserveSelection {
+            if let subs = audioManager.readLiveAggregateSubDevices() {
+                selectedPrimary = subs.primaryDevice
+                selectedSecondary = subs.secondaryDevice
+            }
+
+            // Attempt to auto-select first two devices if nothing chosen
+            if selectedPrimary == nil || selectedSecondary == nil {
+                let opts = audioManager.outputDevices.filter { !$0.isAggregate }
+                if opts.count >= 2 {
+                    selectedPrimary = opts[0]
+                    selectedSecondary = opts[1]
+                } else if opts.count == 1 {
+                    selectedPrimary = opts[0]
+                    selectedSecondary = nil
+                } else {
+                    selectedPrimary = nil
+                    selectedSecondary = nil
+                }
+            }
+        } else {
+            // Preserve selection: re-bind to the device instances in the refreshed list if they still exist.
+            let opts = audioManager.outputDevices
+            if let pid = prevPrimaryID {
+                selectedPrimary = opts.first(where: { $0.id == pid })
+            }
+            if let sid = prevSecondaryID {
+                selectedSecondary = opts.first(where: { $0.id == sid })
+            }
+            // Do not auto-select new devices when preserving.
         }
 
-        // Attempt to auto-select first two devices if nothing chosen
-        if selectedPrimary == nil || selectedSecondary == nil {
-            let opts = audioManager.outputDevices.filter { !$0.isAggregate }
-            if opts.count >= 2 {
-                selectedPrimary = opts[0]
-                selectedSecondary = opts[1]
-            } else if opts.count == 1 {
-                selectedPrimary = opts[0]
-                selectedSecondary = nil
-            } else {
-                selectedPrimary = nil
-                selectedSecondary = nil
-            }
-        }
         loadVolumesForSelectedDevices()
     }
 

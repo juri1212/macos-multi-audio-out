@@ -51,21 +51,19 @@ struct SettingsView: View {
                         Text("GitHub").font(.footnote)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Open GitHub repository")
+                    .accessibilityLabel("Open Duophonic on GitHub")
                     .accessibilityAddTraits(.isLink)
-                    .help("Open GitHub repository")
+                    .help("Open Duophonic on GitHub")
                 }
                 Spacer()
                 Button {
-                    // Ensure we reset audio before quitting
-                    // audioManager.disableAggregate()
-                    print("Quitting Duophonic...")
                     NSApp.terminate(nil)
                 } label: {
                     Image(systemName: "power").imageScale(.large)
                 }
                 .keyboardShortcut("q", modifiers: .command)
                 .buttonStyle(.plain)
+                .help("Quit Duophonic")
             }.controlCenterContainer()
             Text(
                 "Duophonic v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?.?.?")"
