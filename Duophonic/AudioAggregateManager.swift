@@ -197,7 +197,7 @@ public final class AudioAggregateManager: ObservableObject {
     public func enableAggregate(
         primary: AudioDeviceInfo,
         secondary: AudioDeviceInfo,
-        name: String = "Multi-Output (App)"
+        name: String = "Multi-Output (Duophonic)"
     ) {
         guard primary.id != secondary.id else {
             statusMessage = "Choose two different devices."
