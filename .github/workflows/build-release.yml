@@ -8,12 +8,8 @@ on:
 
 jobs:
   build:
-    name: Build for macOS architectures
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      matrix:
-        # macos-latest (ARM/Apple Silicon), macos-15-intel (Intel)
-        runner: [macos-latest, macos-15-intel]
+    name: Build for macOS
+    runs-on: macos-26
     permissions:
       contents: write
 
@@ -26,10 +22,6 @@ jobs:
         with:
           xcode-version: 'latest'
 
-      - name: Install dependencies
-        run: |
-          echo "No external dependencies to install. Add commands if needed."
-
       - name: Install xcpretty
         run: |
           gem install --no-document xcpretty
@@ -40,11 +32,12 @@ jobs:
           CONFIGURATION: "Release"
         run: |
           set -o pipefail
-          xcodebuild -scheme "$SCHEME" -configuration "$CONFIGURATION" -sdk macosx clean build CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" -derivedDataPath DerivedData | xcpretty || cat
+          xcodebuild -scheme "$SCHEME" -configuration "$CONFIGURATION" -sdk macosx clean build ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" -derivedDataPath DerivedData | xcpretty || cat && exit 1
 
       - name: Find built .app
         id: find_app
         run: |
+          find DerivedData -type d -name "*.app"
           APP_PATH=$(find DerivedData -type d -name "*.app" | head -n 1)
           if [ -z "$APP_PATH" ]; then
             echo "No .app found"; exit 1
@@ -54,18 +47,8 @@ jobs:
       - name: Package .app as zip
         id: package
         run: |
-          VERSION=${GITHUB_REF_NAME:-latest}
-          APP_NAME=$(basename "${{ steps.find_app.outputs.app_path }}")
-          ARCH=$(uname -m)
-          case "$ARCH" in
-            arm64|aarch64) ARCH_TAG=arm64 ;;
-            x86_64|amd64) ARCH_TAG=x86_64 ;;
-            *) ARCH_TAG=universal ;;
-          esac
-          ZIP_NAME="${APP_NAME%.*}-$ARCH_TAG.zip"
           mkdir -p release
-          ditto -c -k --sequesterRsrc --keepParent "${{ steps.find_app.outputs.app_path }}" "release/$ZIP_NAME"
-          echo "zip=release/$ZIP_NAME" >> $GITHUB_OUTPUT
+          ditto -c -k --sequesterRsrc --keepParent "${{ steps.find_app.outputs.app_path }}" "release/Duophonic.zip"
 
       - name: Upload build zip artifact
         uses: actions/upload-artifact@v4
@@ -101,7 +84,7 @@ jobs:
         with:
           body: |-
             Release ${{ github.ref_name }}
-            - Built on macOS by GitHub Actions (Intel and ARM builds)
+            - Built on macOS by GitHub Actions
           files: release-artifacts/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

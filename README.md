@@ -12,9 +12,9 @@ Easily send macOS audio to two outputs at once — perfect for parties, demos, o
 One-liner for lazy folks:
 
 ```bash
-curl -sSL https://github.com/juri1212/Duophonic/releases/latest/download/Duophonic-$(uname -m).zip -o Duophonic.zip && \
+curl -sSLO https://github.com/juri1212/Duophonic/releases/latest/download/Duophonic.zip && \
 unzip -q Duophonic.zip && \
-rm -rf Duophonic.zip && \
+rm -f Duophonic.zip && \
 mv "Duophonic.app" /Applications/ && \
 open /Applications/Duophonic.app
 ```
@@ -58,9 +58,9 @@ When enabled the app will attempt to set the new aggregate as both the default o
 - Download the latest release and unzip it with a single command:
 
 ```bash
-curl -sSL https://github.com/juri1212/Duophonic/releases/latest/download/Duophonic-$(uname -m | sed -e 's/x86_64/x86_64/' -e 's/arm64/arm64/').zip -o Duophonic.zip
+curl -sSLO https://github.com/juri1212/Duophonic/releases/latest/download/Duophonic.zip
 unzip Duophonic.zip
-rm -rf Duophonic.zip
+rm -f Duophonic.zip
 ```
 
 - Move the app to `/Applications` and open it:
