@@ -15,15 +15,12 @@ struct MainView: View {
     // Per-device volume values (0.0 - 1.0) used by sliders
     @State private var primaryVolume: Double = 1.0
     @State private var secondaryVolume: Double = 1.0
-    
-    var openSettings: () -> Void
-    
+
     var body: some View {
         VStack(spacing: 12) {
             // Header container (title + toggle + settings button)
             HStack {
-                Text("Duophonic")
-                    .font(.headline)
+                Text("Multi-Output Device")
                 Spacer()
                 Toggle(
                     isOn: Binding(
@@ -232,13 +229,6 @@ struct MainView: View {
                 }
                 .help("Refresh device list")
                 .buttonStyle(.plain)
-                Button("Quit") {
-                    // Ensure we reset audio before quitting
-                    audioManager.disableAggregate()
-                    NSApp.terminate(nil)
-                }
-                .keyboardShortcut("q", modifiers: .command)
-                .buttonStyle(.plain)
             }
             .controlCenterContainer()
 
@@ -253,16 +243,8 @@ struct MainView: View {
         .onChange(of: selectedSecondary) {
             loadVolumesForSelectedDevices()
         }
-        .onReceive(
-            NotificationCenter.default.publisher(
-                for: NSApplication.willTerminateNotification
-            )
-        ) { _ in
-            // Disable aggregate and restore defaults on app quit
-            audioManager.disableAggregate()
-        }
     }
-    
+
     private func refreshAudioDevices() {
         audioManager.refreshDevices()
 
@@ -322,7 +304,7 @@ struct MainView: View {
 }
 
 #Preview {
-    MainView(openSettings: {})
-        .frame(width: 260)
+    MainView()
+        .frame(width: 260 - 2 * 14)
         .padding(14)
 }

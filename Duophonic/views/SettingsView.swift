@@ -5,59 +5,82 @@
 //  Created by Juri Beforth on 13.12.25.
 //
 
-import SwiftUI
 import ServiceManagement
+import SwiftUI
 
 struct SettingsView: View {
     // Use EnvironmentObject to receive the appState injected in the App entrypoint
     @EnvironmentObject var appState: AppState
-    var onClose: () -> Void
     @State private var placeholderToggle = false
 
     var body: some View {
         VStack(spacing: 12) {
-            HStack {
-                Text("Settings")
-                    .font(.headline)
-                Spacer()
-                Button {
-                    onClose()
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .imageScale(.medium)
+            // Use the label closure so we can add spacing between the label and the toggle control
+            Toggle(isOn: $appState.launchAtLogin) {
+                HStack {
+                    Text("Start on login")
+                    Spacer()
                 }
-                .help("Close Settings")
-                .buttonStyle(.plain)
+            }
+            .frame(maxWidth: .infinity)
+            .toggleStyle(SwitchToggleStyle())
+            .onChange(of: appState.launchAtLogin) { _, newValue in
+                if newValue == true {
+                    try? SMAppService.mainApp.register()
+                } else {
+                    try? SMAppService.mainApp.unregister()
+                }
+            }
+            .onAppear {
+                if SMAppService.mainApp.status == .enabled {
+                    appState.launchAtLogin = true
+                } else {
+                    appState.launchAtLogin = false
+                }
             }
             .controlCenterContainer()
 
-            Toggle("Start on login", isOn: $appState.launchAtLogin)
-                .toggleStyle(SwitchToggleStyle())
-                .onChange(of: appState.launchAtLogin) { _, newValue in
-                    if newValue == true {
-                        try? SMAppService.mainApp.register()
-                    } else {
-                        try? SMAppService.mainApp.unregister()
-                    }
-                }
-                .onAppear {
-                    if SMAppService.mainApp.status == .enabled {
-                        appState.launchAtLogin = true
-                    } else {
-                        appState.launchAtLogin = false
-                    }
-                }
-                .controlCenterContainer()
+            Spacer()
 
-            Spacer(minLength: 0)
+            HStack {
+                // GitHub link — replace the URL with your GitHub repo URL
+                if let githubURL = URL(string: "https://github.com/juri1212/Duophonic") {
+                    Link(destination: githubURL) {
+                        Image(systemName: "chevron.left.slash.chevron.right")
+                            .imageScale(.large)
+                        Text("GitHub").font(.footnote)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Open GitHub repository")
+                    .accessibilityAddTraits(.isLink)
+                    .help("Open GitHub repository")
+                }
+                Spacer()
+                Button {
+                    // Ensure we reset audio before quitting
+                    // audioManager.disableAggregate()
+                    print("Quitting Duophonic...")
+                    NSApp.terminate(nil)
+                } label: {
+                    Image(systemName: "power").imageScale(.large)
+                }
+                .keyboardShortcut("q", modifiers: .command)
+                .buttonStyle(.plain)
+            }.controlCenterContainer()
+            Text(
+                "Duophonic v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?.?.?")"
+            )
+            .font(.footnote)
+
         }
-        .padding(14)
         .background(Color.clear)
+
     }
 }
 
 #Preview {
-    SettingsView(onClose: {})
-        .frame(width: 260)
+    SettingsView()
+        .frame(width: 260 - 2 * 14)
+        .padding(14)
         .environmentObject(AppState())
 }

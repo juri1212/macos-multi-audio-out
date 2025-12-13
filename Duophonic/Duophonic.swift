@@ -32,7 +32,7 @@ struct Duophonic: App {
                 .environmentObject(appState)  // inject AppState into the environment
         } label: {
             Image("StatusBarIcon")
-                .renderingMode(.template) // allow system tinting for light/dark
+                .renderingMode(.template)  // allow system tinting for light/dark
         }
         .menuBarExtraStyle(.window)  // try .menu or .window to change appearance
     }

@@ -10,6 +10,10 @@ import Combine
 import CoreAudio
 import Foundation
 
+#if canImport(AppKit)
+    import AppKit
+#endif
+
 public struct AudioDeviceInfo: Identifiable, Hashable {
     public let id: AudioObjectID
     public let uid: String
@@ -29,15 +33,28 @@ public final class AudioAggregateManager: ObservableObject {
     public init() {
         refreshDevices()
         previousDefaultOutput = getDefaultOutputDevice()
+        #if canImport(AppKit)
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(handleWillTerminate),
+                name: NSApplication.willTerminateNotification,
+                object: nil
+            )
+        #endif
     }
 
     deinit {
         // Best effort cleanup if still enabled
-        if aggregateEnabled, createdAggregateID != 0 {
-            _ = setDefaultOutputDevice(previousDefaultOutput)
-            _ = destroyAggregateDevice(createdAggregateID)
-        }
+        print("AudioAggregateManager deinit: cleaning up...")
+        self.disableAggregate()
     }
+
+    #if canImport(AppKit)
+        @objc private func handleWillTerminate(_ note: Notification) {
+            // Explicit cleanup during app termination
+            self.disableAggregate()
+        }
+    #endif
 
     // MARK: - Public API
 
