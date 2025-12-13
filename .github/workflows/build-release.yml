@@ -36,7 +36,7 @@ jobs:
 
       - name: Build app (Release)
         env:
-          SCHEME: "multi-audio-out"
+          SCHEME: "Duophonic"
           CONFIGURATION: "Release"
         run: |
           set -o pipefail
@@ -108,5 +108,5 @@ jobs:
 
 # Notes:
 # - The workflow triggers on tag pushes like `v1.2.3` and via manual dispatch.
-# - It builds the `multi-audio-out` scheme in Release configuration and disables code signing for CI.
+# - It builds the `Duophonic` scheme in Release configuration and disables code signing for CI.
 # - To fully automate a Homebrew tap update, a separate step is needed to update the tap repo and open a PR (requires a token with push rights to the tap stored as `HOMEBREW_PAT`).

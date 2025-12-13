@@ -1,6 +1,6 @@
 //
 //  AudioAggregateManager.swift
-//  multi-audio-out
+//  Duophonic
 //
 //  Created by Juri Beforth on 01.12.25.
 //

@@ -1,6 +1,6 @@
 //
 //  multi_audio_outApp.swift
-//  multi-audio-out
+//  Duophonic
 //
 //  Created by Juri Beforth on 01.12.25.
 //
@@ -16,7 +16,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 }
 
 @main
-struct multi_audio_outApp: App {
+struct Duophonic: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     // Provide a single shared AppState instance for the app
     private let appState = AppState()

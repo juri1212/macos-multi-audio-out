@@ -7,13 +7,13 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		8D8D42C82EDD7CB4007391DD /* multi-audio-out.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "multi-audio-out.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		8D8D42C82EDD7CB4007391DD /* Duophonic.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Duophonic.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		8D8D42CA2EDD7CB4007391DD /* multi-audio-out */ = {
+		8D8D42CA2EDD7CB4007391DD /* Duophonic */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "multi-audio-out";
+			path = Duophonic;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -32,7 +32,7 @@
 		8D8D42BF2EDD7CB4007391DD = {
 			isa = PBXGroup;
 			children = (
-				8D8D42CA2EDD7CB4007391DD /* multi-audio-out */,
+				8D8D42CA2EDD7CB4007391DD /* Duophonic */,
 				8D8D42C92EDD7CB4007391DD /* Products */,
 			);
 			sourceTree = "<group>";
@@ -40,7 +40,7 @@
 		8D8D42C92EDD7CB4007391DD /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				8D8D42C82EDD7CB4007391DD /* multi-audio-out.app */,
+				8D8D42C82EDD7CB4007391DD /* Duophonic.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,9 +48,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		8D8D42C72EDD7CB4007391DD /* multi-audio-out */ = {
+		8D8D42C72EDD7CB4007391DD /* Duophonic */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 8D8D42D32EDD7CB8007391DD /* Build configuration list for PBXNativeTarget "multi-audio-out" */;
+			buildConfigurationList = 8D8D42D32EDD7CB8007391DD /* Build configuration list for PBXNativeTarget "Duophonic" */;
 			buildPhases = (
 				8D8D42C42EDD7CB4007391DD /* Sources */,
 				8D8D42C52EDD7CB4007391DD /* Frameworks */,
@@ -61,13 +61,13 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				8D8D42CA2EDD7CB4007391DD /* multi-audio-out */,
+				8D8D42CA2EDD7CB4007391DD /* Duophonic */,
 			);
-			name = "multi-audio-out";
+			name = Duophonic;
 			packageProductDependencies = (
 			);
-			productName = "multi-audio-out";
-			productReference = 8D8D42C82EDD7CB4007391DD /* multi-audio-out.app */;
+			productName = Duophonic;
+			productReference = 8D8D42C82EDD7CB4007391DD /* Duophonic.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -85,7 +85,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 8D8D42C32EDD7CB4007391DD /* Build configuration list for PBXProject "multi-audio-out" */;
+			buildConfigurationList = 8D8D42C32EDD7CB4007391DD /* Build configuration list for PBXProject "Duophonic" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -99,7 +99,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				8D8D42C72EDD7CB4007391DD /* multi-audio-out */,
+				8D8D42C72EDD7CB4007391DD /* Duophonic */,
 			);
 		};
 /* End PBXProject section */
@@ -255,13 +255,15 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Duophonic;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.juri1212.multi-audio-out";
+				PRODUCT_BUNDLE_IDENTIFIER = com.juri1212.Duophonic;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -285,13 +287,15 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Duophonic;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.juri1212.multi-audio-out";
+				PRODUCT_BUNDLE_IDENTIFIER = com.juri1212.Duophonic;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -306,7 +310,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		8D8D42C32EDD7CB4007391DD /* Build configuration list for PBXProject "multi-audio-out" */ = {
+		8D8D42C32EDD7CB4007391DD /* Build configuration list for PBXProject "Duophonic" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				8D8D42D12EDD7CB8007391DD /* Debug */,
@@ -315,7 +319,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		8D8D42D32EDD7CB8007391DD /* Build configuration list for PBXNativeTarget "multi-audio-out" */ = {
+		8D8D42D32EDD7CB8007391DD /* Build configuration list for PBXNativeTarget "Duophonic" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				8D8D42D42EDD7CB8007391DD /* Debug */,

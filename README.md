@@ -1,6 +1,9 @@
-# <img src="multi-audio-out/Assets.xcassets/AppIcon.appiconset/multi-audio-out-logo-64.png" alt="multi-audio-out logo" width="48" style="vertical-align:middle" /> macOS Multi Audio Out
+# <img src="Duophonic/Assets.xcassets/AppIcon.appiconset/Duophonic-logo-64.png" alt="Duophonic logo" width="48" />&nbsp;&nbsp;Duophonic
 
-Split your sound. Double the fun.
+Listening together matters, because sharing is caring.
+
+> In synthesizers, Duophonic means the ability to play two notes at once.
+Duophonic for Mac lets you do the same with sound — listening together.
 
 Easily send macOS audio to two outputs at once — perfect for parties, demos, or running headphones and speakers together. Lightweight, system-aware, and built with Core Audio so everything stays in sync.
 
@@ -9,11 +12,11 @@ Easily send macOS audio to two outputs at once — perfect for parties, demos, o
 One-liner for lazy folks:
 
 ```bash
-curl -sSL https://github.com/juri1212/macos-multi-audio-out/releases/latest/download/multi-audio-out-$(uname -m | sed -e 's/x86_64/x86_64/' -e 's/arm64/arm64/').zip -o multi-audio-out.zip && \
-unzip -q multi-audio-out.zip && \
-rm -rf multi-audio-out.zip && \
-mv "multi-audio-out.app" /Applications/ && \
-open /Applications/multi-audio-out.app
+curl -sSL https://github.com/juri1212/macos-Duophonic/releases/latest/download/Duophonic-$(uname -m).zip -o Duophonic.zip && \
+unzip -q Duophonic.zip && \
+rm -rf Duophonic.zip && \
+mv "Duophonic.app" /Applications/ && \
+open /Applications/Duophonic.app
 ```
 > Note: You may be prompted to allow the app in System Settings → Privacy & Security.
 
@@ -55,16 +58,16 @@ When enabled the app will attempt to set the new aggregate as both the default o
 - Download the latest release and unzip it with a single command:
 
 ```bash
-curl -sSL https://github.com/juri1212/macos-multi-audio-out/releases/latest/download/multi-audio-out-$(uname -m | sed -e 's/x86_64/x86_64/' -e 's/arm64/arm64/').zip -o multi-audio-out.zip
-unzip multi-audio-out.zip
-rm -rf multi-audio-out.zip
+curl -sSL https://github.com/juri1212/macos-Duophonic/releases/latest/download/Duophonic-$(uname -m | sed -e 's/x86_64/x86_64/' -e 's/arm64/arm64/').zip -o Duophonic.zip
+unzip Duophonic.zip
+rm -rf Duophonic.zip
 ```
 
 - Move the app to `/Applications` and open it:
 
 ```bash
-mv "multi-audio-out.app" /Applications/
-open /Applications/multi-audio-out.app
+mv "Duophonic.app" /Applications/
+open /Applications/Duophonic.app
 ```
 
 > Note: You may be prompted to allow the app in System Settings → Privacy & Security. Approve any prompts and, if necessary, grant the app permissions to access audio devices.
@@ -80,6 +83,6 @@ open /Applications/multi-audio-out.app
 To remove the app and its preferences:
 
 ```bash
-rm -rf /Applications/multi-audio-out.app
-rm -rf ~/Library/Preferences/juri1212.multi-audio-out.plist
+rm -rf /Applications/Duophonic.app
+rm -rf ~/Library/Preferences/juri1212.Duophonic.plist
 ```
