@@ -1,4 +1,4 @@
-# <img src="Duophonic/Assets.xcassets/AppIcon.appiconset/Duophonic-logo-64.png" alt="Duophonic logo" width="48" />&nbsp;&nbsp;Duophonic
+# <img src="docs/images/AppIcon-Default-64x64@1x.png" alt="Duophonic logo" width="48" />&nbsp;&nbsp;Duophonic
 
 Listening together matters, because sharing is caring.
 
