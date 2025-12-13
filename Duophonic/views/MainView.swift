@@ -223,18 +223,6 @@ struct MainView: View {
                         .foregroundStyle(.secondary)
                         .lineLimit(3)
                 }
-                Button {
-                    withAnimation(
-                        .spring(response: 0.5, dampingFraction: 0.8)
-                    ) {
-                        openSettings()
-                    }
-                } label: {
-                    Image(systemName: "gearshape")
-                        .imageScale(.medium)
-                }
-                .help("Open Settings")
-                .buttonStyle(.plain)
                 Spacer()
                 Button {
                     refreshAudioDevices()
@@ -255,7 +243,6 @@ struct MainView: View {
             .controlCenterContainer()
 
         }
-        .padding(14)
         .background(Color.clear)
         .onAppear {
             refreshAudioDevices()
@@ -337,4 +324,5 @@ struct MainView: View {
 #Preview {
     MainView(openSettings: {})
         .frame(width: 260)
+        .padding(14)
 }
