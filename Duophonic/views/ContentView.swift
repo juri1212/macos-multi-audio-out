@@ -35,10 +35,13 @@ struct ContentView: View {
                 }
                 .help(showingSettings ? "Close Settings" : "Open Settings")
                 .buttonStyle(.plain)
-            }.controlCenterContainer()
+            }.padding(.horizontal, 8)
+                .padding(.top, 8)
+                .padding(.bottom, 0)
+            Divider().padding(0)
             Spacer().frame(height: 16)
             ZStack(alignment: .top) {
-                MainView()
+                MainView(settingsShowing: $showingSettings)
                     .rotation3DEffect(
                         .degrees(showingSettings ? 180 : 0),
                         axis: (x: 0, y: 1, z: 0),
@@ -64,7 +67,7 @@ struct ContentView: View {
             .onAppear {
                 showingSettings = false
             }
-        }.padding(14)
+        }.padding(0)
     }
 }
 

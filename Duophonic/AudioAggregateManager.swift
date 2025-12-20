@@ -22,10 +22,75 @@ public struct AudioDeviceInfo: Identifiable, Hashable {
     public let isAggregate: Bool
 }
 
+public enum AudioDeviceCategory: String, CaseIterable {
+    case builtin = "Built-In"
+    case airplay = "AirPlay"
+    case bluetooth = "Bluetooth"
+    case usb = "USB"
+    case other = "Other"
+
+    public var iconName: String {
+        switch self {
+        case .builtin: return "hifispeaker.2.fill"
+        case .airplay: return "airplayaudio"
+        case .bluetooth: return "airpods.gen3"
+        case .usb: return "cable.connector"
+        case .other: return "speaker.wave.2"
+        }
+    }
+
+    public var subtitle: String { rawValue }
+
+    public static func infer(from device: AudioDeviceInfo)
+        -> AudioDeviceCategory
+    {
+        let lowerName = device.name.lowercased()
+        if lowerName.contains("airpods") || lowerName.contains("earbud") {
+            return .bluetooth
+        }
+        if lowerName.contains("bluetooth") {
+            return .bluetooth
+        }
+        if lowerName.contains("airplay") || lowerName.contains("apple tv") {
+            return .airplay
+        }
+        if lowerName.contains("usb") {
+            return .usb
+        }
+        if lowerName.contains("built") || lowerName.contains("macbook") {
+            return .builtin
+        }
+        return .other
+    }
+}
+
+public struct AudioDevice: Identifiable, Equatable {
+    public let audioDeviceInfo: AudioDeviceInfo
+    public let category: AudioDeviceCategory
+    public let supportsVolume: Bool
+    public var volume: Double
+
+    public var id: AudioObjectID { audioDeviceInfo.id }
+    public var name: String { audioDeviceInfo.name }
+}
+
 public final class AudioAggregateManager: ObservableObject {
     @Published public private(set) var outputDevices: [AudioDeviceInfo] = []
+    @Published public var devices: [AudioDevice] = []
+    @Published public var primaryDeviceID: AudioObjectID?
+    @Published public var secondaryDeviceID: AudioObjectID?
     @Published public private(set) var aggregateEnabled: Bool = false
     @Published public private(set) var statusMessage: String = ""
+
+    public var primaryDevice: AudioDevice? {
+        guard let id = primaryDeviceID else { return nil }
+        return devices.first(where: { $0.id == id })
+    }
+
+    public var secondaryDevice: AudioDevice? {
+        guard let id = secondaryDeviceID else { return nil }
+        return devices.first(where: { $0.id == id })
+    }
 
     // Track IDs for lifecycle
     private var createdAggregateID: AudioObjectID = 0
@@ -58,6 +123,31 @@ public final class AudioAggregateManager: ObservableObject {
 
     public func refreshDevices() {
         outputDevices = fetchAllDevices().filter { $0.isOutputCapable }
+        devices =
+            outputDevices
+            .filter { !$0.isAggregate }
+            .sorted {
+                $0.name.localizedCaseInsensitiveCompare($1.name)
+                    == .orderedAscending
+            }
+            .map { info -> AudioDevice in
+                return AudioDevice(
+                    audioDeviceInfo: info,
+                    category: AudioDeviceCategory.infer(from: info),
+                    supportsVolume: deviceHasVolumeControl(info.id),
+                    volume: Double(getDeviceVolume(info.id) ?? 1)
+                )
+            }
+    }
+
+    public func selectPrimaryDevice(_ deviceID: AudioObjectID) {
+        guard devices.contains(where: { $0.id == deviceID }) else { return }
+        primaryDeviceID = deviceID
+    }
+
+    public func selectSecondaryDevice(_ deviceID: AudioObjectID) {
+        guard devices.contains(where: { $0.id == deviceID }) else { return }
+        secondaryDeviceID = deviceID
     }
 
     public func setStatusMessage(_ message: String) {

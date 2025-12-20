@@ -28,7 +28,7 @@ struct Duophonic: App {
         // loadable by `Image("...")`, so create a separate image set for the status bar.
         MenuBarExtra {
             ContentView()
-                .frame(width: 260)
+                .frame(width: 280)
                 .environmentObject(appState)  // inject AppState into the environment
         } label: {
             Image("StatusBarIcon")

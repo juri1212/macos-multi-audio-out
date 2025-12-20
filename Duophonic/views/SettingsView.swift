@@ -38,13 +38,15 @@ struct SettingsView: View {
                     appState.launchAtLogin = false
                 }
             }
-            .controlCenterContainer()
+            .padding(.horizontal, 32)
 
             Spacer()
 
             HStack {
                 // GitHub link — replace the URL with your GitHub repo URL
-                if let githubURL = URL(string: "https://github.com/juri1212/Duophonic") {
+                if let githubURL = URL(
+                    string: "https://github.com/juri1212/Duophonic"
+                ) {
                     Link(destination: githubURL) {
                         Image(systemName: "chevron.left.slash.chevron.right")
                             .imageScale(.large)
@@ -64,11 +66,13 @@ struct SettingsView: View {
                 .keyboardShortcut("q", modifiers: .command)
                 .buttonStyle(.plain)
                 .help("Quit Duophonic")
-            }.controlCenterContainer()
+            }.padding(.horizontal, 32)
+            Divider()
             Text(
                 "Duophonic v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?.?.?")"
             )
             .font(.footnote)
+            .padding(2)
 
         }
         .background(Color.clear)
