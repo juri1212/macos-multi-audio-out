@@ -7,6 +7,10 @@ Duophonic for Mac lets you do the same with sound — listening together.
 
 Easily send macOS audio to two outputs at once — perfect for parties, demos, or running headphones and speakers together. Lightweight, system-aware, and built with Core Audio so everything stays in sync.
 
+|  |  |
+|---:|:---|
+| <img src="docs/images/ui-main-view.png" alt="Main UI" width="440" /> | <img src="docs/images/ui-settings-view.png" alt="Settings UI" width="440" /> |
+
 ## Quick Download & Install
 
 One-liner for lazy folks:
@@ -30,9 +34,7 @@ open /Applications/Duophonic.app
 - Quick refresh of device list and auto-selection of the first two outputs.
 - Ideal for **listening with two pairs of AirPods** (or any two Bluetooth headsets). Create an aggregate output, set each AirPod pair as one of the outputs, and enjoy synced playback between both sets.
 
-<div align="center">
-	<img src="docs/images/app-ui.png" alt="App UI placeholder" width="300" />
-</div>
+
 
 ## Usage
 
