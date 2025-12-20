@@ -86,3 +86,12 @@ To remove the app and its preferences:
 rm -rf /Applications/Duophonic.app
 rm -rf ~/Library/Preferences/juri1212.Duophonic.plist
 ```
+
+## Development
+
+Run these after cloning to enable repository hooks and install the formatter:
+
+```bash
+git config core.hooksPath .githooks
+brew install swift-format
+```

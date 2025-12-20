@@ -1,0 +1,71 @@
+#!/bin/bash
+
+echo "Running swift-format on staged Swift files..."
+
+# Get list of staged .swift files
+FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.swift$')
+
+# Initialize an array to hold modified files
+MODIFIED_FILES=()
+
+for FILE in $FILES; do
+    if [ -f "$FILE" ]; then
+        # Get the SHA before formatting
+        SHA_BEFORE=$(git hash-object "$FILE")
+
+        # Format the file
+        swift-format format -i "$FILE"
+
+        # Get the SHA after formatting
+        SHA_AFTER=$(git hash-object "$FILE")
+
+        # If the SHAs are different, the file was modified
+        if [ "$SHA_BEFORE" != "$SHA_AFTER" ]; then
+            echo "Swiftly Formatted file: $FILE"
+            MODIFIED_FILES+=("$FILE")
+            # Add the file back to staging
+            git add "$FILE"
+        fi
+    fi
+done
+
+# Check if any files were modified
+if [ ${#MODIFIED_FILES[@]} -gt 0 ]; then
+    echo ""
+    echo "The following files were modified by swift-format:"
+    for FILE in "${MODIFIED_FILES[@]}"; do
+        echo " - $FILE"
+    done
+    echo ""
+
+    # Try to prompt the user using /dev/tty
+    if [ -e /dev/tty ]; then
+        # Prompt the user for input
+       while true; do
+            # Read input from /dev/tty
+            read -p "Would you like to inspect the changes before commit [y/n(o I trust my formatter)]? " RESPONSE < /dev/tty
+
+            # Convert response to lowercase using 'tr'
+            RESPONSE=$(echo "$RESPONSE" | tr '[:upper:]' '[:lower:]')    
+
+            if [ "$RESPONSE" == "y" ]; then
+                echo "Please review the changes before committing."
+                echo "Commit has been aborted."
+                exit 1  # Abort the commit
+            elif [ "$RESPONSE" == "n" ]; then
+                echo "You're a braver dev than I!"
+                exit 0  # Continue with the commit
+            else
+                # Send the prompt to /dev/tty
+                echo "Please enter 'y' or 'n'." > /dev/tty
+            fi
+        done
+    else
+        # Cannot prompt the user; proceed or abort based on your preference
+        echo "Cannot prompt for input (no /dev/tty available)."
+        echo "Proceeding with the commit by default."
+        exit 0
+    fi
+else
+    echo "No files needed formatting; you're a rockstar."
+fi
