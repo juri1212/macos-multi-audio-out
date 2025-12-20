@@ -387,11 +387,13 @@ private struct DeviceListHeightKey: PreferenceKey {
     }
 }
 
-#Preview("Audio Device Control") {
-    VStack(alignment: .leading, spacing: 16) {
-        AudioDeviceSelectorView(viewModel: .preview)
-            .padding()
+#if DEBUG
+    #Preview("Audio Device Control") {
+        VStack(alignment: .leading, spacing: 16) {
+            AudioDeviceSelectorView(viewModel: .preview)
+                .padding()
+        }
+        .frame(width: 320, height: 320)
+        .background(Color.black)
     }
-    .frame(width: 320, height: 320)
-    .background(Color.black)
-}
+#endif
