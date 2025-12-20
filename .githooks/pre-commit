@@ -54,6 +54,7 @@ if [ ${#MODIFIED_FILES[@]} -gt 0 ]; then
                 exit 1  # Abort the commit
             elif [ "$RESPONSE" == "n" ]; then
                 echo "You're a braver dev than I!"
+                swift-format lint --strict -r .
                 exit 0  # Continue with the commit
             else
                 # Send the prompt to /dev/tty
@@ -64,8 +65,10 @@ if [ ${#MODIFIED_FILES[@]} -gt 0 ]; then
         # Cannot prompt the user; proceed or abort based on your preference
         echo "Cannot prompt for input (no /dev/tty available)."
         echo "Proceeding with the commit by default."
+        swift-format lint --strict -r .
         exit 0
     fi
 else
     echo "No files needed formatting; you're a rockstar."
+    swift-format lint --strict -r .
 fi

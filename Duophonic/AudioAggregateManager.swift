@@ -162,7 +162,7 @@ public final class AudioAggregateManager: ObservableObject {
 
         // 1) Try master UID
         var addrMaster = AudioObjectPropertyAddress(
-            mSelector: kAudioAggregateDevicePropertyMainSubDevice,  // SDK symbol for master subdevice
+            mSelector: kAudioAggregateDevicePropertyMainSubDevice,
             mScope: kAudioObjectPropertyScopeGlobal,
             mElement: kAudioObjectPropertyElementMain
         )
