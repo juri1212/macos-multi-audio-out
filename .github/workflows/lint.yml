@@ -7,7 +7,7 @@ on:
 jobs:
   swift-format:
     name: Check Swift formatting
-    runs-on: macos-latest
+    runs-on: macos-26
     steps:
       - name: Checkout
         uses: actions/checkout@v4
