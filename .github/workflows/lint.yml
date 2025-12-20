@@ -1,0 +1,22 @@
+name: Linting
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  swift-format:
+    name: Check Swift formatting
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run swift-format lint
+        run: |
+          set -e
+          if command -v swift-format >/dev/null 2>&1; then
+            swift-format lint --strict -r .
+          else
+            swift format lint --strict -r .
+          fi
