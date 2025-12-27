@@ -199,7 +199,7 @@ public final class AudioAggregateManager: ObservableObject {
 
         guard masterUID != nil else { return nil }
 
-        let masterID = audioObjectID(forUID: masterUID!)
+        let masterID = audioObjectID(for: masterUID!)
 
         // 2) Read subdevice list
         var addrList = AudioObjectPropertyAddress(
@@ -590,7 +590,7 @@ public final class AudioAggregateManager: ObservableObject {
             kAudioAggregateDeviceNameKey as String: name,
             kAudioAggregateDeviceUIDKey as String: uid,
             kAudioAggregateDeviceIsPrivateKey as String: false,
-            kAudioAggregateDeviceMasterSubDeviceKey as String:
+            kAudioAggregateDeviceMainSubDeviceKey as String:
                 masterSubDeviceUID,
             kAudioAggregateDeviceSubDeviceListKey as String: subDicts,
             kAudioAggregateDeviceIsStackedKey as String: true,
@@ -608,30 +608,41 @@ public final class AudioAggregateManager: ObservableObject {
         }
     }
 
-    private func audioObjectID(forUID uid: String) -> AudioObjectID? {
-        var uidCF = uid as CFString
-        var addr = AudioObjectPropertyAddress(
-            mSelector: kAudioHardwarePropertyDeviceForUID,
-            mScope: kAudioObjectPropertyScopeGlobal,
-            mElement: kAudioObjectPropertyElementMain
-        )
+    private func audioObjectID(for uid: String) -> AudioObjectID? {
+        var uid = uid as CFString
+        let uidSize = UInt32(MemoryLayout<CFString>.size)
+        var id: AudioDeviceID = kAudioDeviceUnknown
+        let idSize = UInt32(MemoryLayout<AudioDeviceID>.size)
 
-        var deviceID = AudioObjectID(0)
-        var size = UInt32(MemoryLayout<AudioObjectID>.size)
+        withUnsafeMutablePointer(to: &uid) { uidMutablePointer in
+            withUnsafeMutablePointer(to: &id) { idMutablePointer in
+                var translation = AudioValueTranslation(
+                    mInputData: uidMutablePointer,
+                    mInputDataSize: uidSize,
+                    mOutputData: idMutablePointer,
+                    mOutputDataSize: idSize
+                )
+                var translationSize = UInt32(MemoryLayout<AudioValueTranslation>.size)
 
-        let inputSize = UInt32(MemoryLayout<CFString?>.size)
-        let status: OSStatus = withUnsafePointer(to: &uidCF) { ptr in
-            AudioObjectGetPropertyData(
-                AudioObjectID(kAudioObjectSystemObject),
-                &addr,
-                inputSize,
-                UnsafeRawPointer(ptr),
-                &size,
-                &deviceID
-            )
+                var propertyAddress = AudioObjectPropertyAddress(
+                    mSelector: kAudioHardwarePropertyDeviceForUID,
+                    mScope: kAudioObjectPropertyScopeGlobal,
+                    mElement: kAudioObjectPropertyElementMain
+                )
+
+                AudioObjectGetPropertyData(
+                    AudioObjectID(kAudioObjectSystemObject),
+                    &propertyAddress,
+                    0,
+                    nil,
+                    &translationSize,
+                    &translation
+                )
+            }
         }
 
-        return status == noErr ? deviceID : nil
+        guard id != kAudioDeviceUnknown else { return nil }
+        return id
     }
 
     @discardableResult
