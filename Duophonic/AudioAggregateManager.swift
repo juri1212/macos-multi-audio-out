@@ -142,12 +142,48 @@ public final class AudioAggregateManager: ObservableObject {
 
     public func selectPrimaryDevice(_ deviceID: AudioObjectID) {
         guard devices.contains(where: { $0.id == deviceID }) else { return }
+        guard primaryDeviceID != deviceID else { return }
         primaryDeviceID = deviceID
+        print(primaryDevice?.audioDeviceInfo.uid ?? "no primary uid")
+        if aggregateEnabled && createdAggregateID != 0 && primaryDevice != nil {
+            switch updatePrimaryDeviceOfAggregate(
+                aggregateID: createdAggregateID,
+                newPrimaryDeviceUID: primaryDevice!.audioDeviceInfo.uid
+            ) {
+            case .success():
+                statusMessage = "Updated primary device to \(primaryDevice!.name)."
+            case .failure(let err):
+                statusMessage = "Failed to update primary device (\(err.localizedDescription))."
+            }
+        }
     }
 
     public func selectSecondaryDevice(_ deviceID: AudioObjectID) {
         guard devices.contains(where: { $0.id == deviceID }) else { return }
+        guard secondaryDeviceID != deviceID else { return }
         secondaryDeviceID = deviceID
+        if aggregateEnabled && createdAggregateID != 0 && secondaryDevice != nil
+            && primaryDevice != nil
+        {
+            guard let primary = primaryDevice,
+                let secondary = secondaryDevice
+            else { return }
+            let subDevices: [(uid: String, driftCompensate: Bool)] = [
+                (uid: primary.audioDeviceInfo.uid, driftCompensate: false),
+                (uid: secondary.audioDeviceInfo.uid, driftCompensate: true),
+            ]
+            switch updateSubDevicesOfAggregate(
+                aggregateID: createdAggregateID,
+                subDevices: subDevices
+            ) {
+            case .success():
+                statusMessage = "Updated secondary device to \(secondary.name)."
+                print("Updated secondary device to \(secondary.name).")
+            case .failure(let err):
+                statusMessage = "Failed to update secondary device (\(err.localizedDescription))."
+                print("Failed to update secondary device (\(err.localizedDescription)).")
+            }
+        }
     }
 
     public func setStatusMessage(_ message: String) {
@@ -569,7 +605,10 @@ public final class AudioAggregateManager: ObservableObject {
         )
     }
 
-    private enum AggError: Error { case creationFailed(OSStatus) }
+    private enum AggError: Error {
+        case creationFailed(OSStatus)
+        case updateFailed(OSStatus)
+    }
 
     private func createAggregateDevice(
         name: String,
@@ -606,6 +645,64 @@ public final class AudioAggregateManager: ObservableObject {
         } else {
             return .failure(AggError.creationFailed(status))
         }
+    }
+
+    private func updatePrimaryDeviceOfAggregate(
+        aggregateID: AudioObjectID,
+        newPrimaryDeviceUID: String
+    ) -> Result<Void, Error> {
+        var addr = AudioObjectPropertyAddress(
+            mSelector: kAudioAggregateDevicePropertyMainSubDevice,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        var cfUID = newPrimaryDeviceUID as CFString
+        let size = UInt32(MemoryLayout<CFString>.size)
+        let status: OSStatus = withUnsafePointer(to: &cfUID) { ptr in
+            AudioObjectSetPropertyData(
+                aggregateID,
+                &addr,
+                0,
+                nil,
+                size,
+                UnsafeRawPointer(ptr)
+            )
+        }
+        return status == noErr ? .success(()) : .failure((AggError.updateFailed(status)))
+    }
+
+    private func updateSubDevicesOfAggregate(
+        aggregateID: AudioObjectID,
+        subDevices: [(uid: String, driftCompensate: Bool)]
+    ) -> Result<Void, Error> {
+        let subDicts: [[String: Any]] = subDevices.map { entry in
+            [
+                kAudioSubDeviceUIDKey as String: entry.uid,
+                kAudioSubDeviceDriftCompensationKey as String:
+                    (entry
+                    .driftCompensate ? kCFBooleanTrue : kCFBooleanFalse) as CFBoolean,
+            ]
+        }
+        let cfSubDicts = subDicts as CFArray
+
+        var addr = AudioObjectPropertyAddress(
+            mSelector: kAudioAggregateDevicePropertyFullSubDeviceList,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+
+        let size = UInt32(MemoryLayout<CFArray?>.size)
+        let status: OSStatus = withUnsafePointer(to: cfSubDicts) { ptr in
+            AudioObjectSetPropertyData(
+                aggregateID,
+                &addr,
+                0,
+                nil,
+                size,
+                UnsafeRawPointer(ptr)
+            )
+        }
+        return status == noErr ? .success(()) : .failure((AggError.updateFailed(status)))
     }
 
     private func audioObjectID(for uid: String) -> AudioObjectID? {
