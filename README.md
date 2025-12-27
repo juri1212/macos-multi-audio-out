@@ -7,9 +7,9 @@ Duophonic for Mac lets you do the same with sound — listening together.
 
 Easily send macOS audio to two outputs at once — perfect for parties, demos, or running headphones and speakers together. Lightweight, system-aware, and built with Core Audio so everything stays in sync.
 
-|  |  |
-|---:|:---|
-| <img src="docs/images/ui-main-view.png" alt="Main UI" width="440" /> | <img src="docs/images/ui-settings-view.png" alt="Settings UI" width="440" /> |
+|  |  | |
+|---:|:---|:---|
+| <img src="docs/images/main-view.png" alt="Main UI" width="440" /> | <img src="docs/images/main-view-expanded.png" alt="Main UI" width="440" /> | <img src="docs/images/settings-view.png" alt="Settings UI" width="440" /> |
 
 ## Quick Download & Install
 
